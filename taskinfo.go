@@ -50,7 +50,7 @@ func (task *TaskInfo) Start() {
 						case <-task.TimeTicker.C:
 							defer func() {
 								if err := recover(); err != nil {
-									task.taskService.logger.Debug(task.TaskID, " cron handler recover error => ", err)
+									task.taskService.Debug(task.TaskID, " cron handler recover error => ", err)
 								}
 							}()
 							now := time.Now()
@@ -64,7 +64,7 @@ func (task *TaskInfo) Start() {
 								//task.taskService.logger.Debug(task.TaskID, " begin dohandler")
 								err := task.handler(task.Context)
 								if err != nil {
-									task.taskService.logger.Debug(task.TaskID, " cron handler failed => "+err.Error())
+									task.taskService.Debug(task.TaskID, " cron handler failed => "+err.Error())
 								} else {
 									//task.taskService.logger.Debug(task.TaskID, " cron handler end success")
 								}
@@ -82,14 +82,14 @@ func (task *TaskInfo) Start() {
 					case <-task.TimeTicker.C:
 						defer func() {
 							if err := recover(); err != nil {
-								task.taskService.logger.Debug(task.TaskID, " loop handler recover error => ", err)
+								task.taskService.Debug(task.TaskID, " loop handler recover error => ", err)
 							}
 						}()
 						//do log
 						//task.taskService.logger.Debug(task.TaskID, " loop handler begin")
 						err := task.handler(task.Context)
 						if err != nil {
-							task.taskService.logger.Debug(task.TaskID, " loop handler failed => "+err.Error())
+							task.taskService.Debug(task.TaskID, " loop handler failed => "+err.Error())
 						} else {
 							//task.taskService.logger.Debug(task.TaskID, " loop handler end success")
 						}
