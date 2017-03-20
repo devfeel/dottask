@@ -14,16 +14,16 @@ type FmtLogger struct {
 }
 
 func (logger *FmtLogger) Debug(v ...interface{}) {
-	fmt.Println(time.Now().Format(defaultTimeLayout), " [DEBUG] ", v[0:])
+	fmt.Println(time.Now().Format(defaultTimeLayout), " [DEBUG] ", fmt.Sprint(v...))
 }
 func (logger *FmtLogger) Info(v ...interface{}) {
-	fmt.Println(time.Now().Format(defaultTimeLayout), " [INFO] ", v[0:])
+	fmt.Println(time.Now().Format(defaultTimeLayout), " [INFO] ", fmt.Sprint(v...))
 }
 func (logger *FmtLogger) Warn(v ...interface{}) {
-	fmt.Println(time.Now().Format(defaultTimeLayout), " [WARN] ", v[0:])
+	fmt.Println(time.Now().Format(defaultTimeLayout), " [WARN] ", fmt.Sprint(v...))
 }
 func (logger *FmtLogger) Error(v ...interface{}) {
-	fmt.Println(time.Now().Format(defaultTimeLayout), " [ERROR] ", v[0:])
+	fmt.Println(time.Now().Format(defaultTimeLayout), " [ERROR] ", fmt.Sprint(v...))
 }
 
 func Job_Test(ctx *TaskContext) error {

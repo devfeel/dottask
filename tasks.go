@@ -35,9 +35,11 @@ type (
 
 	//task 容器
 	TaskService struct {
-		taskMap   map[string]*TaskInfo
-		taskMutex *sync.RWMutex
-		logger    Logger
+		taskMap      map[string]*TaskInfo
+		taskMutex    *sync.RWMutex
+		logger       Logger
+		handlerMap   map[string]TaskHandle
+		handlerMutex *sync.RWMutex
 	}
 
 	Logger interface {
@@ -52,13 +54,52 @@ func StartNewService() *TaskService {
 	service := new(TaskService)
 	service.taskMutex = new(sync.RWMutex)
 	service.taskMap = make(map[string]*TaskInfo)
+	service.handlerMutex = new(sync.RWMutex)
+	service.handlerMap = make(map[string]TaskHandle)
 
 	return service
+}
+
+func (service *TaskService) RegisterHandler(name string, handler TaskHandle) {
+	service.handlerMutex.Lock()
+	service.handlerMap[name] = handler
+	service.handlerMutex.Unlock()
+}
+
+func (service *TaskService) GetHandler(name string) (TaskHandle, bool) {
+	service.handlerMutex.RLock()
+	v, exists := service.handlerMap[name]
+	service.handlerMutex.RUnlock()
+	return v, exists
 }
 
 //set logger which Implements Logger interface
 func (service *TaskService) SetLogger(logger Logger) {
 	service.logger = logger
+}
+
+func (service *TaskService) Debug(v ...interface{}) {
+	if service.logger != nil {
+		service.logger.Debug(v...)
+	}
+}
+
+func (service *TaskService) Info(v ...interface{}) {
+	if service.logger != nil {
+		service.logger.Info(v...)
+	}
+}
+
+func (service *TaskService) Warn(v ...interface{}) {
+	if service.logger != nil {
+		service.logger.Warn(v...)
+	}
+}
+
+func (service *TaskService) Error(v ...interface{}) {
+	if service.logger != nil {
+		service.logger.Error(v...)
+	}
 }
 
 //create new crontask
@@ -121,7 +162,7 @@ func (service *TaskService) AddTask(t *TaskInfo) {
 	service.taskMap[t.TaskID] = t
 	service.taskMutex.Unlock()
 	t.taskService = service
-	service.logger.Debug("Task:AddTask => ", t.TaskID)
+	service.Debug("Task:AddTask => ", t.TaskID)
 }
 
 //remove task by taskid
@@ -129,7 +170,7 @@ func (service *TaskService) RemoveTask(taskID string) {
 	service.taskMutex.Lock()
 	delete(service.taskMap, taskID)
 	service.taskMutex.Unlock()
-	service.logger.Debug("Task:RemoveTask => ", taskID)
+	service.Debug("Task:RemoveTask => ", taskID)
 }
 
 //get all task's count
@@ -152,29 +193,29 @@ func (service *TaskService) PrintAllCronTask() string {
 func (service *TaskService) RemoveAllTask() {
 	service.StopAllTask()
 	service.taskMap = make(map[string]*TaskInfo)
-	service.logger.Debug("Task:RemoveAllTask")
+	service.Debug("Task:RemoveAllTask")
 }
 
 //stop all task
 func (service *TaskService) StopAllTask() {
-	service.logger.Info("Task:StopAllTask begin...")
+	service.Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
-		service.logger.Debug("Task:StopAllTask::StopTask => ", v.TaskID)
+		service.Debug("Task:StopAllTask::StopTask => ", v.TaskID)
 		v.Stop()
 	}
-	service.logger.Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
+	service.Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
 }
 
 //start all task
 func (service *TaskService) StartAllTask() {
-	service.logger.Info("Task:StartAllTask begin...")
+	service.Info("Task:StartAllTask begin...")
 	for _, v := range service.taskMap {
-		service.logger.Debug("Task:StartAllTask::StartTask => " + v.TaskID)
+		service.Debug("Task:StartAllTask::StartTask => " + v.TaskID)
 		v.Start()
 	}
-	service.logger.Info("Task:StartAllTask end[" + strconv.Itoa(len(service.taskMap)) + "]")
+	service.Info("Task:StartAllTask end[" + strconv.Itoa(len(service.taskMap)) + "]")
 }
 
 func (service *TaskService) debugExpress(set *ExpressSet) {
-	service.logger.Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
+	service.Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
 }
