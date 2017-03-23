@@ -75,7 +75,7 @@ task.conf:
 <config>
 <global isrun="true" logpath="d:/"/>
 <tasks>
-    <task taskid="Loop_Config" type="loop" isrun="true" interval="10" handlername="Loop_Config"></task>
+    <task taskid="Loop_Config" duetime="10000" type="loop" isrun="true" interval="10" handlername="Loop_Config"></task>
     <task taskid="Job_Config" type="cron" isrun="true" express="0 */5 * * * *" handlername="Job_Config"></task>
 </tasks>
 </config>
@@ -113,7 +113,7 @@ func main() {
 	if err != nil {
 		fmt.Println("service.CreateCronTask error! => ", err.Error())
 	}
-	_, err = service.CreateLoopTask("testloop", true, 1000, Loop_Test, nil)
+	_, err = service.CreateLoopTask("testloop", true, 0, 1000, Loop_Test, nil)
 	if err != nil {
 		fmt.Println("service.CreateLoopTask error! => ", err.Error())
 	}
