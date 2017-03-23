@@ -16,7 +16,7 @@ func Job_Config(ctx *TaskContext) error {
 
 func Loop_Config(ctx *TaskContext) error {
 	fmt.Println(time.Now().String(), " => Loop_Config")
-	time.Sleep(time.Second * 3)
+	//time.Sleep(time.Second * 3)
 	return nil
 }
 
