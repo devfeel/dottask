@@ -13,6 +13,7 @@ const (
 //task info define
 type TaskInfo struct {
 	TaskID       string `json:"taskid"`
+	IsRun        bool   `json:"isrun"`
 	taskService  *TaskService
 	mutex        sync.RWMutex
 	TimeTicker   *time.Ticker `json:"-"`
@@ -32,6 +33,10 @@ type TaskInfo struct {
 
 //start crontask
 func (task *TaskInfo) Start() {
+	if !task.IsRun {
+		return
+	}
+
 	task.mutex.Lock()
 	defer task.mutex.Unlock()
 
@@ -50,7 +55,7 @@ func (task *TaskInfo) Start() {
 						case <-task.TimeTicker.C:
 							defer func() {
 								if err := recover(); err != nil {
-									task.taskService.Debug(task.TaskID, " cron handler recover error => ", err)
+									task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
 								}
 							}()
 							now := time.Now()
@@ -61,12 +66,12 @@ func (task *TaskInfo) Start() {
 								task.time_Minute.IsMatch(now) &&
 								task.time_Second.IsMatch(now) {
 								//do log
-								//task.taskService.logger.Debug(task.TaskID, " begin dohandler")
+								//task.taskService.Logger().Debug(task.TaskID, " begin dohandler")
 								err := task.handler(task.Context)
 								if err != nil {
-									task.taskService.Debug(task.TaskID, " cron handler failed => "+err.Error())
+									task.taskService.Logger().Debug(task.TaskID, " cron handler failed => "+err.Error())
 								} else {
-									//task.taskService.logger.Debug(task.TaskID, " cron handler end success")
+									//task.taskService.Logger().Debug(task.TaskID, " cron handler end success")
 								}
 							}
 						}
@@ -82,16 +87,16 @@ func (task *TaskInfo) Start() {
 					case <-task.TimeTicker.C:
 						defer func() {
 							if err := recover(); err != nil {
-								task.taskService.Debug(task.TaskID, " loop handler recover error => ", err)
+								task.taskService.Logger().Debug(task.TaskID, " loop handler recover error => ", err)
 							}
 						}()
 						//do log
-						//task.taskService.logger.Debug(task.TaskID, " loop handler begin")
+						//task.taskService.Logger().Debug(task.TaskID, " loop handler begin")
 						err := task.handler(task.Context)
 						if err != nil {
-							task.taskService.Debug(task.TaskID, " loop handler failed => "+err.Error())
+							task.taskService.Logger().Debug(task.TaskID, " loop handler failed => "+err.Error())
 						} else {
-							//task.taskService.logger.Debug(task.TaskID, " loop handler end success")
+							//task.taskService.Logger().Debug(task.TaskID, " loop handler end success")
 						}
 					}
 				}
@@ -104,8 +109,12 @@ func (task *TaskInfo) Start() {
 
 //stop taskinfo
 func (task *TaskInfo) Stop() {
+	if !task.IsRun {
+		return
+	}
 	if task.State == TaskState_Stop {
 		task.TimeTicker.Stop()
 		task.State = TaskState_Stop
+		task.taskService.Logger().Debug(task.TaskID, " Stop")
 	}
 }

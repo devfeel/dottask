@@ -3,6 +3,8 @@ package task
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,18 +37,12 @@ type (
 
 	//task 容器
 	TaskService struct {
+		Config       *AppConfig
 		taskMap      map[string]*TaskInfo
 		taskMutex    *sync.RWMutex
 		logger       Logger
 		handlerMap   map[string]TaskHandle
 		handlerMutex *sync.RWMutex
-	}
-
-	Logger interface {
-		Error(v ...interface{})
-		Warn(v ...interface{})
-		Info(v ...interface{})
-		Debug(v ...interface{})
 	}
 )
 
@@ -56,8 +52,43 @@ func StartNewService() *TaskService {
 	service.taskMap = make(map[string]*TaskInfo)
 	service.handlerMutex = new(sync.RWMutex)
 	service.handlerMap = make(map[string]TaskHandle)
-
 	return service
+}
+
+//如果指定配置文件，初始化配置
+func (service *TaskService) LoadConfig(configFile string) {
+	service.Config = InitConfig(configFile)
+	if service.logger == nil {
+		if service.Config.Global.LogPath != "" {
+			service.SetLogger(NewFileLogger(service.Config.Global.LogPath))
+		} else {
+			service.SetLogger(NewFmtLogger())
+		}
+	}
+	for _, v := range service.Config.Tasks {
+		if handler, exists := service.GetHandler(v.HandlerName); exists {
+			if v.TaskType == TaskType_Cron && v.Express != "" {
+				_, err := service.CreateCronTask(v.TaskID, v.IsRun, v.Express, handler, v)
+				if err != nil {
+					service.Logger().Warn("CreateCronTask failed [" + err.Error() + "] [" + fmt.Sprint(v) + "]")
+				} else {
+					service.Logger().Debug("CreateCronTask success [" + fmt.Sprint(v) + "]")
+				}
+			} else if v.TaskType == TaskType_Loop && v.Interval > 0 {
+				_, err := service.CreateLoopTask(v.TaskID, v.IsRun, v.Interval, handler, v)
+				if err != nil {
+					service.Logger().Warn("CreateLoopTask failed [" + err.Error() + "] [" + fmt.Sprint(v) + "]")
+				} else {
+					service.Logger().Debug("CreateLoopTask success [" + fmt.Sprint(v) + "]")
+				}
+			} else {
+				service.Logger().Warn("CreateTask failed not match config [" + fmt.Sprint(v) + "]")
+			}
+
+		} else {
+			service.Logger().Warn("CreateTask failed not exists handler [" + fmt.Sprint(v) + "]")
+		}
+	}
 }
 
 func (service *TaskService) RegisterHandler(name string, handler TaskHandle) {
@@ -78,32 +109,15 @@ func (service *TaskService) SetLogger(logger Logger) {
 	service.logger = logger
 }
 
-func (service *TaskService) Debug(v ...interface{}) {
-	if service.logger != nil {
-		service.logger.Debug(v...)
+func (service *TaskService) Logger() Logger {
+	if service.logger == nil {
+		service.logger = NewFmtLogger()
 	}
-}
-
-func (service *TaskService) Info(v ...interface{}) {
-	if service.logger != nil {
-		service.logger.Info(v...)
-	}
-}
-
-func (service *TaskService) Warn(v ...interface{}) {
-	if service.logger != nil {
-		service.logger.Warn(v...)
-	}
-}
-
-func (service *TaskService) Error(v ...interface{}) {
-	if service.logger != nil {
-		service.logger.Error(v...)
-	}
+	return service.logger
 }
 
 //create new crontask
-func (service *TaskService) CreateCronTask(taskID string, express string, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
+func (service *TaskService) CreateCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
 	context.TaskData = taskData
@@ -111,6 +125,7 @@ func (service *TaskService) CreateCronTask(taskID string, express string, handle
 	task := new(TaskInfo)
 	task.TaskID = context.TaskID
 	task.TaskType = TaskType_Cron
+	task.IsRun = isRun
 	task.handler = handler
 	task.RawExpress = express
 	expresslist := strings.Split(express, " ")
@@ -139,7 +154,7 @@ func (service *TaskService) CreateCronTask(taskID string, express string, handle
 }
 
 //create new looptask
-func (service *TaskService) CreateLoopTask(taskID string, interval int64, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
+func (service *TaskService) CreateLoopTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
 	context.TaskData = taskData
@@ -147,6 +162,7 @@ func (service *TaskService) CreateLoopTask(taskID string, interval int64, handle
 	task := new(TaskInfo)
 	task.TaskID = context.TaskID
 	task.TaskType = TaskType_Loop
+	task.IsRun = isRun
 	task.handler = handler
 	task.Interval = interval
 	task.State = TaskState_Init
@@ -162,7 +178,7 @@ func (service *TaskService) AddTask(t *TaskInfo) {
 	service.taskMap[t.TaskID] = t
 	service.taskMutex.Unlock()
 	t.taskService = service
-	service.Debug("Task:AddTask => ", t.TaskID)
+	service.Logger().Debug("Task:AddTask => ", t.TaskID)
 }
 
 //remove task by taskid
@@ -170,7 +186,7 @@ func (service *TaskService) RemoveTask(taskID string) {
 	service.taskMutex.Lock()
 	delete(service.taskMap, taskID)
 	service.taskMutex.Unlock()
-	service.Debug("Task:RemoveTask => ", taskID)
+	service.Logger().Debug("Task:RemoveTask => ", taskID)
 }
 
 //get all task's count
@@ -193,29 +209,40 @@ func (service *TaskService) PrintAllCronTask() string {
 func (service *TaskService) RemoveAllTask() {
 	service.StopAllTask()
 	service.taskMap = make(map[string]*TaskInfo)
-	service.Debug("Task:RemoveAllTask")
+	service.Logger().Debug("Task:RemoveAllTask")
 }
 
 //stop all task
 func (service *TaskService) StopAllTask() {
-	service.Info("Task:StopAllTask begin...")
+	service.Logger().Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Debug("Task:StopAllTask::StopTask => ", v.TaskID)
+		service.Logger().Debug("Task:StopAllTask::StopTask => ", v.TaskID)
 		v.Stop()
 	}
-	service.Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
+	service.Logger().Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
 }
 
 //start all task
 func (service *TaskService) StartAllTask() {
-	service.Info("Task:StartAllTask begin...")
+	service.Logger().Info("Task:StartAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Debug("Task:StartAllTask::StartTask => " + v.TaskID)
+		service.Logger().Debug("Task:StartAllTask::StartTask => " + v.TaskID)
 		v.Start()
 	}
-	service.Info("Task:StartAllTask end[" + strconv.Itoa(len(service.taskMap)) + "]")
+	service.Logger().Info("Task:StartAllTask end[" + strconv.Itoa(len(service.taskMap)) + "]")
 }
 
 func (service *TaskService) debugExpress(set *ExpressSet) {
-	service.Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
+	service.Logger().Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
 }
