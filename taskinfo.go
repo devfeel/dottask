@@ -32,7 +32,7 @@ type TaskInfo struct {
 	time_Second  *ExpressSet
 }
 
-//start crontask
+//start task
 func (task *TaskInfo) Start() {
 	if !task.IsRun {
 		return
@@ -54,7 +54,7 @@ func (task *TaskInfo) Start() {
 	}
 }
 
-//stop taskinfo
+//stop task
 func (task *TaskInfo) Stop() {
 	if !task.IsRun {
 		return
