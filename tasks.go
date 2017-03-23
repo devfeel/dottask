@@ -75,7 +75,7 @@ func (service *TaskService) LoadConfig(configFile string) {
 					service.Logger().Debug("CreateCronTask success [" + fmt.Sprint(v) + "]")
 				}
 			} else if v.TaskType == TaskType_Loop && v.Interval > 0 {
-				_, err := service.CreateLoopTask(v.TaskID, v.IsRun, v.Interval, handler, v)
+				_, err := service.CreateLoopTask(v.TaskID, v.IsRun, v.DueTime, v.Interval, handler, v)
 				if err != nil {
 					service.Logger().Warn("CreateLoopTask failed [" + err.Error() + "] [" + fmt.Sprint(v) + "]")
 				} else {
@@ -154,7 +154,7 @@ func (service *TaskService) CreateCronTask(taskID string, isRun bool, express st
 }
 
 //create new looptask
-func (service *TaskService) CreateLoopTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
+func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
 	context.TaskData = taskData
@@ -164,6 +164,7 @@ func (service *TaskService) CreateLoopTask(taskID string, isRun bool, interval i
 	task.TaskType = TaskType_Loop
 	task.IsRun = isRun
 	task.handler = handler
+	task.DueTime = dueTime
 	task.Interval = interval
 	task.State = TaskState_Init
 	task.Context = context

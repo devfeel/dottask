@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		fmt.Println("service.CreateCronTask error! => ", err.Error())
 	}
-	_, err = service.CreateLoopTask("testloop", true, 1000, Loop_Test, nil)
+	_, err = service.CreateLoopTask("testloop", true, 0, 1000, Loop_Test, nil)
 	if err != nil {
 		fmt.Println("service.CreateLoopTask error! => ", err.Error())
 	}

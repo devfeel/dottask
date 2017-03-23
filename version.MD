@@ -1,5 +1,10 @@
 devfeel/task
 
+#### Version 0.2.1
+* LoopTask增加DueTime设置，表示开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
+* 更新 example\normal、example\loadfromconfig 示例
+* 2017-03-23 16:00
+
 #### Version 0.2
 * 新增配置文件加载方式
 * 新增默认FileLogger、FmtLogger内建支持，如果未显式设置logger，自动使用FmtLogger

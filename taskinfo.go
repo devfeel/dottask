@@ -21,6 +21,7 @@ type TaskInfo struct {
 	handler      TaskHandle
 	Context      *TaskContext `json:"context"`
 	State        string       `json:"state"`    //匹配 TskState_Init、TaskState_Run、TaskState_Stop
+	DueTime      int64        `json:"duetime"`  //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
 	Interval     int64        `json:"interval"` //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop时有效
 	RawExpress   string       `json:"express"`  //运行周期表达式，当TaskType==TaskType_Cron时有效
 	time_WeekDay *ExpressSet
@@ -80,8 +81,8 @@ func (task *TaskInfo) Start() {
 			}
 			time.AfterFunc(afterTime, dofunc)
 		case TaskType_Loop:
-			task.TimeTicker = time.NewTicker(time.Duration(task.Interval) * time.Millisecond)
-			go func() {
+			dofunc := func() {
+				task.TimeTicker = time.NewTicker(time.Duration(task.Interval) * time.Millisecond)
 				for {
 					select {
 					case <-task.TimeTicker.C:
@@ -100,7 +101,14 @@ func (task *TaskInfo) Start() {
 						}
 					}
 				}
-			}()
+			}
+			//等待设定的延时毫秒
+			if task.DueTime > 0 {
+				time.AfterFunc(time.Duration(task.DueTime)*time.Millisecond, dofunc)
+			} else {
+				dofunc()
+			}
+
 		default:
 			panic("not support task_type => " + task.TaskType)
 		}

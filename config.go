@@ -23,6 +23,7 @@ type (
 		TaskID      string `xml:"taskid,attr"`
 		IsRun       bool   `xml:"isrun,attr"`
 		TaskType    string `xml:"type,attr"`
+		DueTime     int64  `xml:"duetime,attr"` //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
 		Interval    int64  `xml:"interval,attr"`
 		Express     string `xml:"express,attr"`
 		HandlerName string `xml:"handlername,attr"`
