@@ -21,6 +21,11 @@ const (
 	TaskType_Cron = "cron"
 )
 
+const (
+	ConfigType_Xml  = "xml"
+	ConfigType_Json = "json"
+)
+
 type (
 	Task interface {
 		Start() error
@@ -57,7 +62,11 @@ func StartNewService() *TaskService {
 
 //如果指定配置文件，初始化配置
 func (service *TaskService) LoadConfig(configFile string, confType ...interface{}) *TaskService {
-	if len(confType) > 0 {
+	cType := ConfigType_Xml
+	if len(confType) > 0 && confType[0] == ConfigType_Json {
+		cType = ConfigType_Json
+	}
+	if cType == ConfigType_Json {
 		service.Config = InitJsonConfig(configFile)
 	} else {
 		service.Config = InitConfig(configFile)
