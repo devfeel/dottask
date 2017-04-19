@@ -1,5 +1,12 @@
 devfeel/task
 
+#### Version 0.3
+* 配置增加json文件支持
+* 支持链式调用
+* 更新 example\normal、example\loadfromconfig 示例, 新增 example\loadfromjson 示例
+* 贡献者：https://github.com/esap
+* 2017-04-19 09:00
+
 #### Version 0.2.1
 * LoopTask增加DueTime设置，表示开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
 * 更新 example\normal、example\loadfromconfig 示例
