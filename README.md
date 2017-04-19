@@ -4,11 +4,11 @@
 
 
 ## 特性
-* 支持配置方式与代码方式
+* 支持配置方式(xml+json)与代码方式
 * 支持cron、loop两种模式
 * cron模式支持“秒 分 时 日 月 周”配置
 * loop模式支持毫秒级别
-* 上次任务没有停止的情况下下次任务顺延
+* 上次任务没有停止的情况下不触发下次任务
 
 
 ## 安装：
@@ -69,7 +69,7 @@ func main() {
 }
 
 ```
-task.conf:
+task.xml.conf:
 ```
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
@@ -80,6 +80,32 @@ task.conf:
 </tasks>
 </config>
 
+```
+task.json.conf:
+```
+{
+	"Global": {
+		"IsRun": true,
+		"LogPath": "d:/"
+	},
+	"Tasks": [
+		{
+			"Taskid": "Loop_Config",
+			"TaskType": "loop",
+			"Isrun": true,
+			"Duetime": 10000,
+			"Interval": 10,
+			"Handlername": "Loop_Config"
+		},
+		{
+			"Taskid": "Job_Config",
+			"TaskType": "cron",
+			"Isrun": true,
+			"Wxpress": "0 */1 * * * *",
+			"Handlername": "Job_Config"
+		}
+	]
+}
 ```
 
 #### 代码方式
