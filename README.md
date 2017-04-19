@@ -75,8 +75,8 @@ task.xml.conf:
 <config>
 <global isrun="true" logpath="d:/"/>
 <tasks>
-    <task taskid="Loop_Config" type="loop" isrun="true" duetime="10000" interval="10" handlername="Loop_Config"></task>
-    <task taskid="Job_Config" type="cron" isrun="true" express="0 */5 * * * *" handlername="Job_Config"></task>
+    <task taskid="Loop_Config" type="loop" isrun="true" duetime="10000" interval="10" handlername="Loop_Config" />
+    <task taskid="Job_Config" type="cron" isrun="true" express="0 */5 * * * *" handlername="Job_Config" />
 </tasks>
 </config>
 
