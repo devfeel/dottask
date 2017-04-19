@@ -56,8 +56,12 @@ func StartNewService() *TaskService {
 }
 
 //如果指定配置文件，初始化配置
-func (service *TaskService) LoadConfig(configFile string) {
-	service.Config = InitConfig(configFile)
+func (service *TaskService) LoadConfig(configFile string, confType ...interface{}) *TaskService {
+	if len(confType) > 0 {
+		service.Config = InitJsonConfig(configFile)
+	} else {
+		service.Config = InitConfig(configFile)
+	}
 	if service.logger == nil {
 		if service.Config.Global.LogPath != "" {
 			service.SetLogger(NewFileLogger(service.Config.Global.LogPath))
@@ -89,12 +93,14 @@ func (service *TaskService) LoadConfig(configFile string) {
 			service.Logger().Warn("CreateTask failed not exists handler [" + fmt.Sprint(v) + "]")
 		}
 	}
+	return service
 }
 
-func (service *TaskService) RegisterHandler(name string, handler TaskHandle) {
+func (service *TaskService) RegisterHandler(name string, handler TaskHandle) *TaskService {
 	service.handlerMutex.Lock()
 	service.handlerMap[name] = handler
 	service.handlerMutex.Unlock()
+	return service
 }
 
 func (service *TaskService) GetHandler(name string) (TaskHandle, bool) {
