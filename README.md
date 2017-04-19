@@ -101,7 +101,7 @@ task.json.conf:
 			"Taskid": "Job_Config",
 			"TaskType": "cron",
 			"Isrun": true,
-			"Wxpress": "0 */1 * * * *",
+			"Express": "0 */1 * * * *",
 			"Handlername": "Job_Config"
 		}
 	]
