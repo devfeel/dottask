@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/esap/task"
+	. "github.com/devfeel/task"
 )
 
 var service *TaskService
