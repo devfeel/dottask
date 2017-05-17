@@ -9,6 +9,7 @@
 * cron模式支持“秒 分 时 日 月 周”配置
 * loop模式支持毫秒级别
 * 上次任务没有停止的情况下不触发下次任务
+* 支持Exception、OnBegin、OnEnd注入点
 
 
 ## 安装：
@@ -133,6 +134,20 @@ func Loop_Test(ctx *TaskContext) error {
 	return nil
 }
 
+func beginHandler(ctx *TaskContext) error {
+	fmt.Println(time.Now().String(), " => OnBegin")
+	return nil
+}
+
+func endHandler(ctx *TaskContext) error {
+	fmt.Println(time.Now().String(), " => OnEnd")
+	return nil
+}
+
+func errorHandler(ctx *TaskContext, err error) {
+	fmt.Println(time.Now().String(), " => Error ", ctx.TaskID, err.Error())
+}
+
 func main() {
 	service = StartNewService()
 	_, err := service.CreateCronTask("testcron", true, "48-5 */2 * * * *", Job_Test, nil)
@@ -143,6 +158,11 @@ func main() {
 	if err != nil {
 		fmt.Println("service.CreateLoopTask error! => ", err.Error())
 	}
+
+	service.SetExceptionHandler(errorHandler)
+    service.SetOnBeforHandler(beginHandler)
+    service.SetOnEndHandler(endHandler)
+
 	service.StartAllTask()
 
 	fmt.Println(service.PrintAllCronTask())
