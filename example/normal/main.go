@@ -16,8 +16,21 @@ func Job_Test(ctx *TaskContext) error {
 
 func Loop_Test(ctx *TaskContext) error {
 	fmt.Println(time.Now().String(), " => Loop_Test")
-	time.Sleep(time.Second * 3)
 	return nil
+}
+
+func beginHandler(ctx *TaskContext) error {
+	fmt.Println(time.Now().String(), " => OnBegin")
+	return nil
+}
+
+func endHandler(ctx *TaskContext) error {
+	fmt.Println(time.Now().String(), " => OnEnd")
+	return nil
+}
+
+func errorHandler(ctx *TaskContext, err error) {
+	fmt.Println(time.Now().String(), " => Error ", ctx.TaskID, err.Error())
 }
 
 func main() {
@@ -31,6 +44,10 @@ func main() {
 		fmt.Println("service.CreateLoopTask error! => ", err.Error())
 	}
 	service.StartAllTask()
+
+	service.SetExceptionHandler(errorHandler)
+	service.SetOnBeforHandler(beginHandler)
+	service.SetOnEndHandler(endHandler)
 
 	fmt.Println(service.PrintAllCronTask())
 

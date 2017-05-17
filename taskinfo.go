@@ -1,6 +1,7 @@
 package task
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -79,7 +80,10 @@ func startCronTask(task *TaskInfo) {
 			case <-task.TimeTicker.C:
 				defer func() {
 					if err := recover(); err != nil {
-						task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
+						//task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
+						if task.taskService.ExceptionHandler != nil {
+							task.taskService.ExceptionHandler(task.Context, fmt.Errorf("%v", err))
+						}
 					}
 				}()
 				now := time.Now()
@@ -91,11 +95,20 @@ func startCronTask(task *TaskInfo) {
 					task.time_Second.IsMatch(now) {
 					//do log
 					//task.taskService.Logger().Debug(task.TaskID, " begin dohandler")
-					err := task.handler(task.Context)
+					if task.taskService.OnBeforHandler != nil {
+						task.taskService.OnBeforHandler(task.Context)
+					}
+					var err error
+					if !task.Context.IsEnd {
+						err = task.handler(task.Context)
+					}
 					if err != nil {
-						task.taskService.Logger().Debug(task.TaskID, " cron handler failed => "+err.Error())
-					} else {
-						//task.taskService.Logger().Debug(task.TaskID, " cron handler end success")
+						if task.taskService.ExceptionHandler != nil {
+							task.taskService.ExceptionHandler(task.Context, err)
+						}
+					}
+					if task.taskService.OnEndHandler != nil {
+						task.taskService.OnEndHandler(task.Context)
 					}
 				}
 			}
@@ -108,16 +121,29 @@ func startLoopTask(task *TaskInfo) {
 	handler := func() {
 		defer func() {
 			if err := recover(); err != nil {
-				task.taskService.Logger().Debug(task.TaskID, " loop handler recover error => ", err)
+				//task.taskService.Logger().Debug(task.TaskID, " loop handler recover error => ", err)
+				if task.taskService.ExceptionHandler != nil {
+					task.taskService.ExceptionHandler(task.Context, fmt.Errorf("%v", err))
+				}
 			}
 		}()
 		//do log
-		//task.taskService.Logger().Debug(task.TaskID, " loop handler begin")
-		err := task.handler(task.Context)
+		if task.taskService.OnBeforHandler != nil {
+			task.taskService.OnBeforHandler(task.Context)
+		}
+		var err error
+		if !task.Context.IsEnd {
+			err = task.handler(task.Context)
+		}
 		if err != nil {
-			task.taskService.Logger().Debug(task.TaskID, " loop handler failed => "+err.Error())
+			if task.taskService.ExceptionHandler != nil {
+				task.taskService.ExceptionHandler(task.Context, err)
+			}
 		} else {
 			//task.taskService.Logger().Debug(task.TaskID, " loop handler end success")
+		}
+		if task.taskService.OnEndHandler != nil {
+			task.taskService.OnEndHandler(task.Context)
 		}
 	}
 	dofunc := func() {

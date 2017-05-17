@@ -1,5 +1,12 @@
 devfeel/task
 
+#### Version 0.4
+* 增加ExceptionHandler\OnBeforHandler\OnEndHandler三个注入点
+* 新增ExceptionHandleFunc func(*TaskContext, error) 定义
+* 内建defaultExceptionHandler支持
+* 更新 example\normal
+* 2017-05-17 19:00
+
 #### Version 0.3
 * 配置增加json文件支持
 * 支持链式调用

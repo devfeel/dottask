@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,20 +37,31 @@ type (
 	TaskContext struct {
 		TaskID   string
 		TaskData interface{}
+		IsEnd    bool //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
 	}
 
 	TaskHandle func(*TaskContext) error
 
+	ExceptionHandleFunc func(*TaskContext, error)
+
 	//task 容器
 	TaskService struct {
-		Config       *AppConfig
-		taskMap      map[string]*TaskInfo
-		taskMutex    *sync.RWMutex
-		logger       Logger
-		handlerMap   map[string]TaskHandle
-		handlerMutex *sync.RWMutex
+		Config           *AppConfig
+		taskMap          map[string]*TaskInfo
+		taskMutex        *sync.RWMutex
+		logger           Logger
+		handlerMap       map[string]TaskHandle
+		handlerMutex     *sync.RWMutex
+		ExceptionHandler ExceptionHandleFunc
+		OnBeforHandler   TaskHandle
+		OnEndHandler     TaskHandle
 	}
 )
+
+func defaultExceptionHandler(ctx *TaskContext, err error) {
+	stack := string(debug.Stack())
+	fmt.Println("[", ctx.TaskID, "] ", ctx.TaskData, " error [", err.Error(), "] => ", stack)
+}
 
 func StartNewService() *TaskService {
 	service := new(TaskService)
@@ -57,7 +69,21 @@ func StartNewService() *TaskService {
 	service.taskMap = make(map[string]*TaskInfo)
 	service.handlerMutex = new(sync.RWMutex)
 	service.handlerMap = make(map[string]TaskHandle)
+	service.ExceptionHandler = defaultExceptionHandler
 	return service
+}
+
+//设置自定义异常处理方法
+func (service *TaskService) SetExceptionHandler(handler ExceptionHandleFunc) {
+	service.ExceptionHandler = handler
+}
+
+func (service *TaskService) SetOnBeforHandler(handler TaskHandle) {
+	service.OnBeforHandler = handler
+}
+
+func (service *TaskService) SetOnEndHandler(handler TaskHandle) {
+	service.OnEndHandler = handler
 }
 
 //如果指定配置文件，初始化配置
