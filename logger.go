@@ -94,10 +94,6 @@ func (logger *fileLogger) writeLog(log string, level string) {
 	file.WriteString(logStr)
 }
 
-func getCurrentDirectory() string {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		return ""
-	}
-	return strings.Replace(dir, "\\", "/", -1)
+func getCurrentDirectory() string {	
+	return filepath.Clean(filepath.Dir(os.Args[0])) + "/"
 }
