@@ -33,7 +33,7 @@ func main() {
 	RegisterTask(service)
 
 	//step 3: load config file
-	service.LoadConfig("d:\\task.conf")
+	service.LoadConfig("d:/task.conf")
 
 	fmt.Println(time.Now().String(), " => Begin Task")
 	//step 4: start all task

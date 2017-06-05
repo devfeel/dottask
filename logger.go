@@ -3,8 +3,6 @@ package task
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -57,7 +55,7 @@ func (logger *fmtLogger) writeLog(log string, level string) {
 /************************* FileLogger *******************************/
 
 func NewFileLogger(filePath string) *fileLogger {
-	if filePath == "" || !pathExists(filePath) {
+	if filePath == "" || !fileExists(filePath) {
 		filePath = getCurrentDirectory()
 	}
 	logger := &fileLogger{filePath: filePath}
@@ -92,8 +90,4 @@ func (logger *fileLogger) writeLog(log string, level string) {
 		return
 	}
 	file.WriteString(logStr)
-}
-
-func getCurrentDirectory() string {	
-	return filepath.Clean(filepath.Dir(os.Args[0])) + "/"
 }

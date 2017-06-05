@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -276,15 +275,4 @@ func (service *TaskService) StartAllTask() {
 
 func (service *TaskService) debugExpress(set *ExpressSet) {
 	service.Logger().Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
-}
-
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
 }
