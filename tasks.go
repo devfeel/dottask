@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -25,6 +24,7 @@ const (
 const (
 	ConfigType_Xml  = "xml"
 	ConfigType_Json = "json"
+	ConfigType_Yaml = "yaml"
 )
 
 type (
@@ -92,8 +92,13 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 	if len(confType) > 0 && confType[0] == ConfigType_Json {
 		cType = ConfigType_Json
 	}
+	if len(confType) > 0 && confType[0] == ConfigType_Yaml {
+		cType = ConfigType_Yaml
+	}
 	if cType == ConfigType_Json {
 		service.Config = InitJsonConfig(configFile)
+	}else if cType == ConfigType_Yaml {
+		service.Config = InitYamlConfig(configFile)
 	} else {
 		service.Config = InitConfig(configFile)
 	}
@@ -276,15 +281,4 @@ func (service *TaskService) StartAllTask() {
 
 func (service *TaskService) debugExpress(set *ExpressSet) {
 	service.Logger().Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
-}
-
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
 }
