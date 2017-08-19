@@ -24,6 +24,7 @@ const (
 const (
 	ConfigType_Xml  = "xml"
 	ConfigType_Json = "json"
+	ConfigType_Yaml = "yaml"
 )
 
 type (
@@ -91,8 +92,13 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 	if len(confType) > 0 && confType[0] == ConfigType_Json {
 		cType = ConfigType_Json
 	}
+	if len(confType) > 0 && confType[0] == ConfigType_Yaml {
+		cType = ConfigType_Yaml
+	}
 	if cType == ConfigType_Json {
 		service.Config = InitJsonConfig(configFile)
+	}else if cType == ConfigType_Yaml {
+		service.Config = InitYamlConfig(configFile)
 	} else {
 		service.Config = InitConfig(configFile)
 	}

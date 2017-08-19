@@ -1,0 +1,25 @@
+#全局配置
+global : 
+    logpath : d:/
+    isrun : true
+    
+tasks :
+-
+  taskid : Loop_Config
+  isrun : true
+  type : loop
+  duetime : 3000
+  interval : 2000
+  express :
+  handlername : Loop_Config
+  handlerdata :
+
+-
+  taskid : Job_Config
+  isrun : true
+  type : cron
+  duetime : 0
+  interval : 0
+  express : 0 */5 * * * *
+  handlername : Job_Config
+  handlerdata :
