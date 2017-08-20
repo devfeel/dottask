@@ -16,7 +16,6 @@ func Job_Config(ctx *TaskContext) error {
 
 func Loop_Config(ctx *TaskContext) error {
 	fmt.Println(time.Now().String(), " =>bbbb Loop_Config")
-	time.Sleep(time.Second * 3)
 	return nil
 }
 
@@ -30,7 +29,7 @@ func main() {
 		RegisterHandler("Loop_Config", Loop_Config).
 
 		//step 3: load config file
-		LoadConfig("./task.yaml", ConfigType_Yaml).
+		LoadConfig("d:/gotmp/task/task.yaml", ConfigType_Yaml).
 
 		//step 4: start all task
 		StartAllTask()

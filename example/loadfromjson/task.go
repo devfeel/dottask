@@ -30,7 +30,7 @@ func main() {
 		RegisterHandler("Loop_Config", Loop_Config).
 
 		//step 3: load config file
-		LoadConfig("d:/task.json.conf", ConfigType_Json).
+		LoadConfig("d:/gotmp/task/task.json.conf", ConfigType_Json).
 
 		//step 4: start all task
 		StartAllTask()

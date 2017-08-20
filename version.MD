@@ -1,5 +1,11 @@
 devfeel/task
 
+#### Version 0.5
+* 配置增加yaml文件支持
+* 新增 example\loadfromyaml 示例
+* 贡献者：https://github.com/yulibaozi
+* 2017-08-20 09:00
+
 #### Version 0.4
 * 增加ExceptionHandler\OnBeforHandler\OnEndHandler三个注入点
 * 新增ExceptionHandleFunc func(*TaskContext, error) 定义

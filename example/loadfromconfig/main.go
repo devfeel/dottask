@@ -28,12 +28,11 @@ func RegisterTask(service *TaskService) {
 func main() {
 	//step 1: init new task service
 	service = StartNewService()
-
 	//step 2: register all task handler
 	RegisterTask(service)
 
 	//step 3: load config file
-	service.LoadConfig("d:/task.conf")
+	service.LoadConfig("d:/gotmp/task/task.conf")
 
 	fmt.Println(time.Now().String(), " => Begin Task")
 	//step 4: start all task
