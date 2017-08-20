@@ -176,7 +176,7 @@ func main() {
 
 
 ## 外部依赖
-yaml https://gopkg.in/yaml.v2
+yaml - https://gopkg.in/yaml.v2
 
 
 ## 如何联系
