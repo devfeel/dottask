@@ -175,5 +175,9 @@ func main() {
 ```
 
 
+## 外部依赖
+yaml gopkg.in/yaml.v2
+
+
 ## 如何联系
 QQ群：193409346
