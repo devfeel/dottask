@@ -1,4 +1,4 @@
-# Devfeel/Task
+# Devfeel/DotTask
 简约大方的go-task组件
 <br>支持cron、loop两种模式
 
@@ -16,7 +16,7 @@
 ## 安装：
 
 ```
-go get -u github.com/devfeel/task
+go get -u github.com/devfeel/dottask
 ```
 
 ## 快速开始：
@@ -28,7 +28,7 @@ package main
 
 import (
 	"fmt"
-	. "github.com/devfeel/task"
+	. "github.com/devfeel/dottask"
 	"time"
 )
 
@@ -117,7 +117,7 @@ package main
 
 import (
 	"fmt"
-	. "github.com/devfeel/task"
+	. "github.com/devfeel/dottask"
 	"time"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/devfeel/task"
+	. "github.com/devfeel/dottask"
 )
 
 var service *TaskService

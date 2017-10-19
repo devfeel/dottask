@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	. "github.com/devfeel/task"
+	. "github.com/devfeel/dottask"
 	"time"
 )
 
