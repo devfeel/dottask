@@ -51,7 +51,10 @@ func main() {
 
 	t, exists := service.GetTask("testloop")
 	if exists {
-		t.RunOnce()
+		err = t.RunOnce()
+		if err != nil {
+			fmt.Println(t.Context, "RunOnce error =>", err)
+		}
 	}
 
 	fmt.Println(service.PrintAllCronTask())
