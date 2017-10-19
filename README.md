@@ -10,6 +10,7 @@
 * loop模式支持毫秒级别
 * 上次任务没有停止的情况下不触发下次任务
 * 支持Exception、OnBegin、OnEnd注入点
+* 支持单独执行TaskHandler
 
 
 ## 安装：

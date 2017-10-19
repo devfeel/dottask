@@ -1,5 +1,12 @@
 devfeel/task
 
+#### Version 0.6
+* TaskInfo增加GetTask、RunOnce方法
+* GetTask：根据TaskID获取*TaskInfo
+* RunOnce：仅执行一次TaskInfo对应的Handler，不匹配任何表达式，不捕获未处理异常
+* Support for #6 新增RunOnce方法建议
+* 2017-10-19 09:00
+
 #### Version 0.5
 * 配置增加yaml文件支持
 * 新增 example\loadfromyaml 示例

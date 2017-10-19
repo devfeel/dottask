@@ -49,6 +49,11 @@ func main() {
 	service.SetOnBeforHandler(beginHandler)
 	service.SetOnEndHandler(endHandler)
 
+	t, exists := service.GetTask("testloop")
+	if exists {
+		t.RunOnce()
+	}
+
 	fmt.Println(service.PrintAllCronTask())
 
 	for true {

@@ -73,20 +73,22 @@ func StartNewService() *TaskService {
 	return service
 }
 
-//设置自定义异常处理方法
+// SetExceptionHandler 设置自定义异常处理方法
 func (service *TaskService) SetExceptionHandler(handler ExceptionHandleFunc) {
 	service.ExceptionHandler = handler
 }
 
+// SetOnBeforHandler set handler which exec before task run
 func (service *TaskService) SetOnBeforHandler(handler TaskHandle) {
 	service.OnBeforHandler = handler
 }
 
+// SetOnEndHandler set handler which exec after task run
 func (service *TaskService) SetOnEndHandler(handler TaskHandle) {
 	service.OnEndHandler = handler
 }
 
-//如果指定配置文件，初始化配置
+// LoadConfig 如果指定配置文件，初始化配置
 func (service *TaskService) LoadConfig(configFile string, confType ...interface{}) *TaskService {
 	cType := ConfigType_Xml
 	if len(confType) > 0 && confType[0] == ConfigType_Json {
@@ -97,7 +99,7 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 	}
 	if cType == ConfigType_Json {
 		service.Config = InitJsonConfig(configFile)
-	}else if cType == ConfigType_Yaml {
+	} else if cType == ConfigType_Yaml {
 		service.Config = InitYamlConfig(configFile)
 	} else {
 		service.Config = InitConfig(configFile)
@@ -136,6 +138,7 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 	return service
 }
 
+// RegisterHandler register handler by name
 func (service *TaskService) RegisterHandler(name string, handler TaskHandle) *TaskService {
 	service.handlerMutex.Lock()
 	service.handlerMap[name] = handler
@@ -143,6 +146,7 @@ func (service *TaskService) RegisterHandler(name string, handler TaskHandle) *Ta
 	return service
 }
 
+// GetHandler get handler by handler name
 func (service *TaskService) GetHandler(name string) (TaskHandle, bool) {
 	service.handlerMutex.RLock()
 	v, exists := service.handlerMap[name]
@@ -150,11 +154,12 @@ func (service *TaskService) GetHandler(name string) (TaskHandle, bool) {
 	return v, exists
 }
 
-//set logger which Implements Logger interface
+// SetLogger set logger which Implements Logger interface
 func (service *TaskService) SetLogger(logger Logger) {
 	service.logger = logger
 }
 
+// Logger get Logger
 func (service *TaskService) Logger() Logger {
 	if service.logger == nil {
 		service.logger = NewFmtLogger()
@@ -162,7 +167,7 @@ func (service *TaskService) Logger() Logger {
 	return service.logger
 }
 
-//create new crontask
+// CreateCronTask create new crontask
 func (service *TaskService) CreateCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
@@ -199,7 +204,7 @@ func (service *TaskService) CreateCronTask(taskID string, isRun bool, express st
 	return task, nil
 }
 
-//create new looptask
+// CreateLoopTask create new looptask
 func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
@@ -219,7 +224,15 @@ func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime in
 	return task, nil
 }
 
-//add new task point
+// GetTask get TaskInfo by TaskID
+func (service *TaskService) GetTask(taskID string) (t *TaskInfo, exists bool) {
+	service.taskMutex.RLock()
+	defer service.taskMutex.RUnlock()
+	t, exists = service.taskMap[taskID]
+	return t, exists
+}
+
+// AddTask add new task point
 func (service *TaskService) AddTask(t *TaskInfo) {
 	service.taskMutex.Lock()
 	service.taskMap[t.TaskID] = t
@@ -228,7 +241,7 @@ func (service *TaskService) AddTask(t *TaskInfo) {
 	service.Logger().Debug("Task:AddTask => ", t.TaskID)
 }
 
-//remove task by taskid
+// RemoveTask remove task by taskid
 func (service *TaskService) RemoveTask(taskID string) {
 	service.taskMutex.Lock()
 	delete(service.taskMap, taskID)
@@ -236,12 +249,12 @@ func (service *TaskService) RemoveTask(taskID string) {
 	service.Logger().Debug("Task:RemoveTask => ", taskID)
 }
 
-//get all task's count
+// Count get all task's count
 func (service *TaskService) Count() int {
 	return len(service.taskMap)
 }
 
-//print all crontask
+// PrintAllCronTask print all crontask
 func (service *TaskService) PrintAllCronTask() string {
 	body := ""
 	for _, v := range service.taskMap {
@@ -252,14 +265,14 @@ func (service *TaskService) PrintAllCronTask() string {
 
 }
 
-//remove all task
+// RemoveAllTask remove all task
 func (service *TaskService) RemoveAllTask() {
 	service.StopAllTask()
 	service.taskMap = make(map[string]*TaskInfo)
 	service.Logger().Debug("Task:RemoveAllTask")
 }
 
-//stop all task
+// StopAllTask stop all task
 func (service *TaskService) StopAllTask() {
 	service.Logger().Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
@@ -269,7 +282,7 @@ func (service *TaskService) StopAllTask() {
 	service.Logger().Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
 }
 
-//start all task
+// StartAllTask start all task
 func (service *TaskService) StartAllTask() {
 	service.Logger().Info("Task:StartAllTask begin...")
 	for _, v := range service.taskMap {

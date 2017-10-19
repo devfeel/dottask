@@ -67,6 +67,15 @@ func (task *TaskInfo) Stop() {
 	}
 }
 
+// RunOnce do task only once
+// no match Express or Interval
+// no recover panic
+// support for #6 新增RunOnce方法建议
+func (task *TaskInfo) RunOnce() error {
+	err := task.handler(task.Context)
+	return err
+}
+
 //start cron task
 func startCronTask(task *TaskInfo) {
 	now := time.Now()
