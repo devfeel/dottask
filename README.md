@@ -48,7 +48,7 @@ func main() {
     //step 1: init new task service
 	service = StartNewService()
 
-	//step 2: register task handler
+    //step 2: register task handler
 	_, err := service.CreateCronTask("testcron", true, "48-5 */2 * * * *", Job_Test, nil)
 	if err != nil {
 		fmt.Println("service.CreateCronTask error! => ", err.Error())
@@ -120,7 +120,7 @@ func main() {
 }
 
 ```
-task.xml.conf:
+#### task.xml.conf:
 ```
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
@@ -132,32 +132,7 @@ task.xml.conf:
 </config>
 
 ```
-task.json.conf:
-```
-{
-	"Global": {
-		"IsRun": true,
-		"LogPath": "d:/"
-	},
-	"Tasks": [
-		{
-			"Taskid": "Loop_Config",
-			"TaskType": "loop",
-			"Isrun": true,
-			"Duetime": 10000,
-			"Interval": 10,
-			"Handlername": "Loop_Config"
-		},
-		{
-			"Taskid": "Job_Config",
-			"TaskType": "cron",
-			"Isrun": true,
-			"Express": "0 */1 * * * *",
-			"Handlername": "Job_Config"
-		}
-	]
-}
-```
+
 
 ## 关于表达式
 * 关于CronTask的TimeExpress 简单解释：
