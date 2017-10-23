@@ -45,10 +45,11 @@ func Loop_Test(ctx *TaskContext) error {
 }
 
 func main() {
+
     //step 1: init new task service
 	service = StartNewService()
 
-    //step 2: register task handler
+	//step 2: register task handler
 	_, err := service.CreateCronTask("testcron", true, "48-5 */2 * * * *", Job_Test, nil)
 	if err != nil {
 		fmt.Println("service.CreateCronTask error! => ", err.Error())
@@ -58,7 +59,7 @@ func main() {
 		fmt.Println("service.CreateLoopTask error! => ", err.Error())
 	}
 
-    //step 3: start all task
+	//step 3: start all task
 	service.StartAllTask()
 
 	fmt.Println(service.PrintAllCronTask())
