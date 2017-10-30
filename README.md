@@ -11,6 +11,7 @@
 * 上次任务没有停止的情况下不触发下次任务
 * 支持Exception、OnBegin、OnEnd注入点
 * 支持单独执行TaskHandler
+* 支持代码级重设Task的相关设置
 
 
 ## 安装：
