@@ -59,6 +59,18 @@ func main() {
 
 	fmt.Println(service.PrintAllCronTask())
 
+	t, exists = service.GetTask("testcron")
+	if exists {
+		conf := &TaskConfig{
+			IsRun:   true,
+			Express: "0 */1 * * * *",
+		}
+		err = t.Reset(conf)
+		if err != nil {
+			fmt.Println(t, "Reset error =>", err)
+		}
+	}
+
 	for true {
 	}
 

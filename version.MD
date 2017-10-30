@@ -1,5 +1,14 @@
 devfeel/task
 
+#### Version 0.7
+* TaskInfo增加Reset方法，用于重设Task相关参数并重启Task
+* 新增TaskConfig结构，用于描述Task基本设置
+* 特别的，TaskID无法被覆盖
+* 特别的，TaskConfig.Handler为nil时，不会覆盖Task老的Handler
+* 特别的，TaskConfig.TaskData为nil时，不会覆盖Task老的TaskData
+* Support for #7 建议增加一个Reset方法，用于重置某个task
+* 2017-10-30 12:00
+
 #### Version 0.6
 * TaskInfo增加GetTask、RunOnce方法
 * GetTask：根据TaskID获取*TaskInfo

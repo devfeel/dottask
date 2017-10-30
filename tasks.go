@@ -181,7 +181,7 @@ func (service *TaskService) CreateCronTask(taskID string, isRun bool, express st
 	task.RawExpress = express
 	expresslist := strings.Split(express, " ")
 	if len(expresslist) != 6 {
-		return nil, errors.New("express is wrong format => not 6 part")
+		return nil, errors.New("express is wrong format => not 6 parts")
 	}
 	task.time_WeekDay = parseExpress(expresslist[5], ExpressType_WeekDay)
 	service.debugExpress(task.time_WeekDay)

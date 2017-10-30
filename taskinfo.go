@@ -1,7 +1,9 @@
 package task
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -11,29 +13,107 @@ const (
 	defaultTimeLayout = "2006-01-02 15:04:05"
 )
 
-//task info define
-type TaskInfo struct {
-	TaskID       string `json:"taskid"`
-	IsRun        bool   `json:"isrun"`
-	taskService  *TaskService
-	mutex        sync.RWMutex
-	TimeTicker   *time.Ticker `json:"-"`
-	TaskType     string       `json:"tasktype"`
-	handler      TaskHandle
-	Context      *TaskContext `json:"context"`
-	State        string       `json:"state"`    //匹配 TskState_Init、TaskState_Run、TaskState_Stop
-	DueTime      int64        `json:"duetime"`  //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
-	Interval     int64        `json:"interval"` //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop时有效
-	RawExpress   string       `json:"express"`  //运行周期表达式，当TaskType==TaskType_Cron时有效
-	time_WeekDay *ExpressSet
-	time_Month   *ExpressSet
-	time_Day     *ExpressSet
-	time_Hour    *ExpressSet
-	time_Minute  *ExpressSet
-	time_Second  *ExpressSet
+type (
+	//TaskInfo task info define
+	TaskInfo struct {
+		TaskID       string `json:"taskid"`
+		IsRun        bool   `json:"isrun"`
+		taskService  *TaskService
+		mutex        sync.RWMutex
+		TimeTicker   *time.Ticker `json:"-"`
+		TaskType     string       `json:"tasktype"`
+		handler      TaskHandle
+		Context      *TaskContext `json:"context"`
+		State        string       `json:"state"`    //匹配 TskState_Init、TaskState_Run、TaskState_Stop
+		DueTime      int64        `json:"duetime"`  //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
+		Interval     int64        `json:"interval"` //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop时有效
+		RawExpress   string       `json:"express"`  //运行周期表达式，当TaskType==TaskType_Cron时有效
+		time_WeekDay *ExpressSet
+		time_Month   *ExpressSet
+		time_Day     *ExpressSet
+		time_Hour    *ExpressSet
+		time_Minute  *ExpressSet
+		time_Second  *ExpressSet
+	}
+
+	//TaskConfig task config
+	TaskConfig struct {
+		TaskID   string
+		IsRun    bool
+		Handler  TaskHandle
+		DueTime  int64
+		Interval int64
+		Express  string
+		TaskData interface{}
+	}
+)
+
+//Reset first check conf, then reload conf & restart task
+//special, TaskID can not be reset
+//special, if TaskData is nil, it can not be reset
+//special, if Handler is nil, it can not be reset
+//fixed for #7
+func (task *TaskInfo) Reset(conf *TaskConfig) error {
+	expresslist := strings.Split(conf.Express, " ")
+
+	//basic check
+	if task.TaskType == TaskType_Cron {
+		if conf.Express == "" {
+			errmsg := "express is empty"
+			task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+			return errors.New(errmsg)
+		}
+		if len(expresslist) != 6 {
+			errmsg := "express is wrong format => not 6 parts"
+			task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+			return errors.New("express is wrong format => not 6 parts")
+		}
+	} else {
+		if task.DueTime < 0 {
+			errmsg := "DueTime is wrong format => must bigger or equal then zero"
+			task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+			return errors.New(errmsg)
+		}
+
+		if task.Interval <= 0 {
+			errmsg := "interval is wrong format => must bigger then zero"
+			task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+			return errors.New(errmsg)
+		}
+	}
+
+	//restart task
+	task.Stop()
+	task.IsRun = conf.IsRun
+	if conf.TaskData != nil {
+		task.Context.TaskData = conf.TaskData
+	}
+	if conf.Handler != nil {
+		task.handler = conf.Handler
+	}
+	task.DueTime = conf.DueTime
+	task.Interval = conf.Interval
+	task.RawExpress = conf.Express
+	if task.TaskType == TaskType_Cron {
+		task.time_WeekDay = parseExpress(expresslist[5], ExpressType_WeekDay)
+		task.taskService.debugExpress(task.time_WeekDay)
+		task.time_Month = parseExpress(expresslist[4], ExpressType_Month)
+		task.taskService.debugExpress(task.time_Month)
+		task.time_Day = parseExpress(expresslist[3], ExpressType_Day)
+		task.taskService.debugExpress(task.time_Day)
+		task.time_Hour = parseExpress(expresslist[2], ExpressType_Hour)
+		task.taskService.debugExpress(task.time_Hour)
+		task.time_Minute = parseExpress(expresslist[1], ExpressType_Minute)
+		task.taskService.debugExpress(task.time_Minute)
+		task.time_Second = parseExpress(expresslist[0], ExpressType_Second)
+		task.taskService.debugExpress(task.time_Second)
+	}
+	task.Start()
+	task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "success")
+	return nil
 }
 
-//start task
+//Start start task
 func (task *TaskInfo) Start() {
 	if !task.IsRun {
 		return
@@ -55,7 +135,7 @@ func (task *TaskInfo) Start() {
 	}
 }
 
-//stop task
+//Stop stop task
 func (task *TaskInfo) Stop() {
 	if !task.IsRun {
 		return
