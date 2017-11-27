@@ -46,14 +46,14 @@ func main() {
 	service.StartAllTask()
 
 	service.SetExceptionHandler(errorHandler)
-	service.SetOnBeforHandler(beginHandler)
-	service.SetOnEndHandler(endHandler)
+	//service.SetOnBeforHandler(beginHandler)
+	//service.SetOnEndHandler(endHandler)
 
 	t, exists := service.GetTask("testloop")
 	if exists {
 		err = t.RunOnce()
 		if err != nil {
-			fmt.Println(t.Context, "RunOnce error =>", err)
+			fmt.Println(t.Context(), "RunOnce error =>", err)
 		}
 	}
 

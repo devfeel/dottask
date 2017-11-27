@@ -1,11 +1,21 @@
 devfeel/task
 
+#### Version 0.8
+* 重构TaskInfo,分拆CronTask\LoopTask,增加Task interface
+* 重构TaskService,所有*TaskInfo调整为Task interface
+* 新增QueueTask,适用于内存队列任务的简单模型
+* 特别的,新增TaskContext.Message：用于每次Task执行上下文消息传输
+* 特别的,TaskContext.TaskData：用于当前Task全局设置的数据项
+* 新增example/queuetask
+* 修复Task.Stop, Task.Reset隐藏bug
+* 2017-11-27 10:00
+
 #### Version 0.7
 * TaskInfo增加Reset方法，用于重设Task相关参数并重启Task
 * 新增TaskConfig结构，用于描述Task基本设置
-* 特别的，TaskID无法被覆盖
-* 特别的，TaskConfig.Handler为nil时，不会覆盖Task老的Handler
-* 特别的，TaskConfig.TaskData为nil时，不会覆盖Task老的TaskData
+* 特别的,TaskID无法被覆盖
+* 特别的,TaskConfig.Handler为nil时，不会覆盖Task老的Handler
+* 特别的,TaskConfig.TaskData为nil时，不会覆盖Task老的TaskData
 * Support for #7 建议增加一个Reset方法，用于重置某个task
 * 2017-10-30 12:00
 

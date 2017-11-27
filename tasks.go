@@ -19,6 +19,7 @@ const (
 const (
 	TaskType_Loop = "loop"
 	TaskType_Cron = "cron"
+	TaskType_Queue = "queue"
 )
 
 const (
@@ -29,25 +30,23 @@ const (
 
 type (
 	Task interface {
-		Start() error
-		Stop() error
+		TaskID() string
+		Context() *TaskContext
+		Start()
+		Stop()
+		RunOnce() error
+		SetTaskService(service *TaskService)
+		Reset(conf *TaskConfig) error
 	}
 
-	//Task上下文信息
-	TaskContext struct {
-		TaskID   string
-		TaskData interface{}
-		IsEnd    bool //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
-	}
 
-	TaskHandle func(*TaskContext) error
 
 	ExceptionHandleFunc func(*TaskContext, error)
 
 	//task 容器
 	TaskService struct {
 		Config           *AppConfig
-		taskMap          map[string]*TaskInfo
+		taskMap          map[string]Task
 		taskMutex        *sync.RWMutex
 		logger           Logger
 		handlerMap       map[string]TaskHandle
@@ -66,7 +65,7 @@ func defaultExceptionHandler(ctx *TaskContext, err error) {
 func StartNewService() *TaskService {
 	service := new(TaskService)
 	service.taskMutex = new(sync.RWMutex)
-	service.taskMap = make(map[string]*TaskInfo)
+	service.taskMap = make(map[string]Task)
 	service.handlerMutex = new(sync.RWMutex)
 	service.handlerMap = make(map[string]TaskHandle)
 	service.ExceptionHandler = defaultExceptionHandler
@@ -168,13 +167,13 @@ func (service *TaskService) Logger() Logger {
 }
 
 // CreateCronTask create new crontask
-func (service *TaskService) CreateCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
+func (service *TaskService) CreateCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (Task, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
 	context.TaskData = taskData
 
-	task := new(TaskInfo)
-	task.TaskID = context.TaskID
+	task := new(CronTask)
+	task.taskID = context.TaskID
 	task.TaskType = TaskType_Cron
 	task.IsRun = isRun
 	task.handler = handler
@@ -197,35 +196,59 @@ func (service *TaskService) CreateCronTask(taskID string, isRun bool, express st
 	service.debugExpress(task.time_Second)
 
 	task.State = TaskState_Init
-	task.Context = context
+	task.context = context
+	task.SetTaskService(service)
 
 	service.AddTask(task)
-
 	return task, nil
 }
 
 // CreateLoopTask create new looptask
-func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handler TaskHandle, taskData interface{}) (*TaskInfo, error) {
+func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handler TaskHandle, taskData interface{}) (Task, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
 	context.TaskData = taskData
 
-	task := new(TaskInfo)
-	task.TaskID = context.TaskID
+	task := new(LoopTask)
+	task.taskID = context.TaskID
 	task.TaskType = TaskType_Loop
 	task.IsRun = isRun
 	task.handler = handler
 	task.DueTime = dueTime
 	task.Interval = interval
 	task.State = TaskState_Init
-	task.Context = context
+	task.context = context
+	task.SetTaskService(service)
 
 	service.AddTask(task)
 	return task, nil
 }
 
+// CreateQueueTask create new queuetask
+func (service *TaskService) CreateQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}, queueSize int) (Task, error){
+	context := new(TaskContext)
+	context.TaskID = taskID
+	context.TaskData = taskData
+
+	task := new(QueueTask)
+	task.taskID = context.TaskID
+	task.TaskType = TaskType_Queue
+	task.IsRun = isRun
+	task.handler = handler
+	task.Interval = interval
+	task.State = TaskState_Init
+	task.context = context
+	task.MessageChan = make(chan interface{}, queueSize)
+	task.SetTaskService(service)
+
+	service.AddTask(task)
+	return task, nil
+}
+
+
+
 // GetTask get TaskInfo by TaskID
-func (service *TaskService) GetTask(taskID string) (t *TaskInfo, exists bool) {
+func (service *TaskService) GetTask(taskID string) (t Task, exists bool) {
 	service.taskMutex.RLock()
 	defer service.taskMutex.RUnlock()
 	t, exists = service.taskMap[taskID]
@@ -233,12 +256,12 @@ func (service *TaskService) GetTask(taskID string) (t *TaskInfo, exists bool) {
 }
 
 // AddTask add new task point
-func (service *TaskService) AddTask(t *TaskInfo) {
+func (service *TaskService) AddTask(t Task) {
 	service.taskMutex.Lock()
-	service.taskMap[t.TaskID] = t
+	service.taskMap[t.TaskID()] = t
 	service.taskMutex.Unlock()
-	t.taskService = service
-	service.Logger().Debug("Task:AddTask => ", t.TaskID)
+
+	service.Logger().Debug("Task:AddTask => ", t.TaskID())
 }
 
 // RemoveTask remove task by taskid
@@ -268,7 +291,7 @@ func (service *TaskService) PrintAllCronTask() string {
 // RemoveAllTask remove all task
 func (service *TaskService) RemoveAllTask() {
 	service.StopAllTask()
-	service.taskMap = make(map[string]*TaskInfo)
+	service.taskMap = make(map[string]Task)
 	service.Logger().Debug("Task:RemoveAllTask")
 }
 
@@ -276,7 +299,7 @@ func (service *TaskService) RemoveAllTask() {
 func (service *TaskService) StopAllTask() {
 	service.Logger().Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Logger().Debug("Task:StopAllTask::StopTask => ", v.TaskID)
+		service.Logger().Debug("Task:StopAllTask::StopTask => ", v.TaskID())
 		v.Stop()
 	}
 	service.Logger().Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
@@ -286,7 +309,7 @@ func (service *TaskService) StopAllTask() {
 func (service *TaskService) StartAllTask() {
 	service.Logger().Info("Task:StartAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Logger().Debug("Task:StartAllTask::StartTask => " + v.TaskID)
+		service.Logger().Debug("Task:StartAllTask::StartTask => " + v.TaskID())
 		v.Start()
 	}
 	service.Logger().Info("Task:StartAllTask end[" + strconv.Itoa(len(service.taskMap)) + "]")

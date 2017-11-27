@@ -1,13 +1,14 @@
 # Devfeel/DotTask
 简约大方的go-task组件
-<br>支持cron、loop两种模式
+<br>支持cron、loop、queue三种模式
 
 
 ## 特性
 * 支持配置方式(xml + json + yaml)与代码方式
-* 支持cron、loop两种模式
+* 支持cron、loop、queue三种模式
 * cron模式支持“秒 分 时 日 月 周”配置
 * loop模式支持毫秒级别
+* queue模式支持毫秒级别
 * 上次任务没有停止的情况下不触发下次任务
 * 支持Exception、OnBegin、OnEnd注入点
 * 支持单独执行TaskHandler
