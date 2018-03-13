@@ -1,5 +1,9 @@
 devfeel/task
 
+#### Version 0.8.1
+* 修复BUG #8：ExpressType_WeekDay下未设置周日情况下自动添加周日运行
+* 2018-03-13 13:00
+
 #### Version 0.8
 * 重构TaskInfo,分拆CronTask\LoopTask,增加Task interface
 * 重构TaskService,所有*TaskInfo调整为Task interface

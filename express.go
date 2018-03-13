@@ -178,9 +178,10 @@ func parseExpress(express, expressType string) (times *ExpressSet) {
 	if expressType == ExpressType_WeekDay {
 		if _, ok := times.timeMap[7]; ok {
 			delete(times.timeMap, 7)
-		}
-		if _, ok := times.timeMap[0]; !ok {
-			times.timeMap[0] = 0
+			//modify for #8
+			if _, ok := times.timeMap[0]; !ok {
+				times.timeMap[0] = 0
+			}
 		}
 	}
 	return times
