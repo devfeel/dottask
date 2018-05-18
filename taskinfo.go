@@ -28,6 +28,7 @@ type (
 	//TaskConfig task config
 	TaskConfig struct {
 		TaskID   string
+		TaskType     string
 		IsRun    bool
 		Handler  TaskHandle
 		DueTime  int64

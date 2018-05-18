@@ -31,6 +31,7 @@ const (
 type (
 	Task interface {
 		TaskID() string
+		GetConfig() *TaskConfig
 		Context() *TaskContext
 		Start()
 		Stop()

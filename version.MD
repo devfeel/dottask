@@ -3,6 +3,7 @@ devfeel/task
 #### Version 0.8.2
 * 调整AddTask\RemoveTask\StartTask\StopTask\StopAllTask日志级别为info级别
 * 调整默认日志文件为dottask_{time}.log
+* Task新增GetConfig接口，用于返回当前task的设置信息，使用TaskConfig包装
 * 2018-05-18 16:00
 
 #### Version 0.8.1

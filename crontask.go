@@ -21,6 +21,20 @@ type (
 	}
 )
 
+// GetConfig get task config info
+func (task *CronTask) GetConfig() *TaskConfig{
+		return &TaskConfig{
+			TaskID:task.taskID,
+			TaskType:task.TaskType,
+			IsRun : task.IsRun,
+			Handler:task.handler,
+			DueTime:task.DueTime,
+			Interval:0,
+			Express:task.RawExpress,
+			TaskData:task.Context().TaskData,
+		}
+}
+
 
 //Reset first check conf, then reload conf & restart task
 //special, TaskID can not be reset
