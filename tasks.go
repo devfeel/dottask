@@ -262,7 +262,7 @@ func (service *TaskService) AddTask(t Task) {
 	service.taskMap[t.TaskID()] = t
 	service.taskMutex.Unlock()
 
-	service.Logger().Info("Task:AddTask => ", t.TaskID())
+	service.Logger().Info("Task:AddTask => ", t.TaskID(), t.GetConfig())
 }
 
 // RemoveTask remove task by taskid
