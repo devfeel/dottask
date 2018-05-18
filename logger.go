@@ -76,7 +76,7 @@ func (logger *fileLogger) Error(v ...interface{}) {
 }
 
 func (logger *fileLogger) writeLog(log string, level string) {
-	filePath := logger.filePath + "task_" + level
+	filePath := logger.filePath + "dottask_" + level
 	filePath += "_" + time.Now().Format(defaultDateFormatForFileName) + ".log"
 	logStr := time.Now().Format(defaultFullTimeLayout) + " " + log
 	logStr += "\r\n"

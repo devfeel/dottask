@@ -261,7 +261,7 @@ func (service *TaskService) AddTask(t Task) {
 	service.taskMap[t.TaskID()] = t
 	service.taskMutex.Unlock()
 
-	service.Logger().Debug("Task:AddTask => ", t.TaskID())
+	service.Logger().Info("Task:AddTask => ", t.TaskID())
 }
 
 // RemoveTask remove task by taskid
@@ -269,7 +269,7 @@ func (service *TaskService) RemoveTask(taskID string) {
 	service.taskMutex.Lock()
 	delete(service.taskMap, taskID)
 	service.taskMutex.Unlock()
-	service.Logger().Debug("Task:RemoveTask => ", taskID)
+	service.Logger().Info("Task:RemoveTask => ", taskID)
 }
 
 // Count get all task's count
@@ -292,14 +292,14 @@ func (service *TaskService) PrintAllCronTask() string {
 func (service *TaskService) RemoveAllTask() {
 	service.StopAllTask()
 	service.taskMap = make(map[string]Task)
-	service.Logger().Debug("Task:RemoveAllTask")
+	service.Logger().Info("Task:RemoveAllTask")
 }
 
 // StopAllTask stop all task
 func (service *TaskService) StopAllTask() {
 	service.Logger().Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Logger().Debug("Task:StopAllTask::StopTask => ", v.TaskID())
+		service.Logger().Info("Task:StopAllTask::StopTask => ", v.TaskID())
 		v.Stop()
 	}
 	service.Logger().Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
@@ -309,7 +309,7 @@ func (service *TaskService) StopAllTask() {
 func (service *TaskService) StartAllTask() {
 	service.Logger().Info("Task:StartAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Logger().Debug("Task:StartAllTask::StartTask => " + v.TaskID())
+		service.Logger().Info("Task:StartAllTask::StartTask => " + v.TaskID())
 		v.Start()
 	}
 	service.Logger().Info("Task:StartAllTask end[" + strconv.Itoa(len(service.taskMap)) + "]")

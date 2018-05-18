@@ -1,5 +1,10 @@
 devfeel/task
 
+#### Version 0.8.2
+* 调整AddTask\RemoveTask\StartTask\StopTask\StopAllTask日志级别为info级别
+* 调整默认日志文件为dottask_{time}.log
+* 2018-05-18 16:00
+
 #### Version 0.8.1
 * 修复BUG #8：ExpressType_WeekDay下未设置周日情况下自动添加周日运行
 * 2018-03-13 13:00
