@@ -13,7 +13,7 @@ const (
 type(
 	QueueTask struct{
 		TaskInfo
-		Interval     int64        //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop时有效
+		Interval     int64        //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop||TaskType_Queue时有效
 		MessageChan chan interface{}
 	}
 )
@@ -40,6 +40,20 @@ func (task *QueueTask) Start() {
 func (task *QueueTask) RunOnce() error {
 	err := task.handler(task.Context())
 	return err
+}
+
+// GetConfig get task config info
+func (task *QueueTask) GetConfig() *TaskConfig{
+	return &TaskConfig{
+		TaskID:task.taskID,
+		TaskType:task.TaskType,
+		IsRun : task.IsRun,
+		Handler:task.handler,
+		DueTime:task.DueTime,
+		Interval:0,
+		Express:"",
+		TaskData:task.Context().TaskData,
+	}
 }
 
 //Reset first check conf, then reload conf & restart task

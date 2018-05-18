@@ -10,7 +10,7 @@ type (
 	//LoopTask loop task info define
 	LoopTask struct {
 		TaskInfo
-		Interval     int64        `json:"interval"` //运行间隔时间，单位毫秒
+		Interval     int64        `json:"interval"` //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop||TaskType_Queue时有效
 	}
 
 )
