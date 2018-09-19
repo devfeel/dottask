@@ -59,6 +59,11 @@ func main() {
 
 	fmt.Println(service.PrintAllCronTask())
 
+	for _, t := range service.GetAllTasks(){
+		fmt.Println("GetAllTasks", t.TaskID(), t.GetConfig().TaskType, t.GetConfig().IsRun, t.GetConfig().Interval, t.GetConfig().Express)
+	}
+
+
 	t, exists = service.GetTask("testcron")
 	if exists {
 		conf := &TaskConfig{
@@ -71,7 +76,8 @@ func main() {
 		}
 	}
 
-	for true {
+	for {
+		time.Sleep(time.Hour)
 	}
 
 }

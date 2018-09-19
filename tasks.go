@@ -278,7 +278,7 @@ func (service *TaskService) Count() int {
 	return len(service.taskMap)
 }
 
-// PrintAllCronTask print all crontask
+// PrintAllCronTask print all task
 func (service *TaskService) PrintAllCronTask() string {
 	body := ""
 	for _, v := range service.taskMap {
@@ -286,8 +286,14 @@ func (service *TaskService) PrintAllCronTask() string {
 		body += string(str) + "\r\n"
 	}
 	return body
-
 }
+
+
+// GetAllTasks get all tasks
+func (service *TaskService) GetAllTasks() map[string]Task {
+	return service.taskMap
+}
+
 
 // RemoveAllTask remove all task
 func (service *TaskService) RemoveAllTask() {

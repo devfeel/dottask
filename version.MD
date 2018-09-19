@@ -1,4 +1,14 @@
-devfeel/task
+## devfeel/task
+
+#### Version 0.8.3
+* New feature: add TaskService.GetAllTasks() used to return all task info which type is map[string]Task
+* Example:
+  ```golang
+  for _, t := range service.GetAllTasks(){
+  		fmt.Println("GetAllTasks", t.TaskID(), t.GetConfig().TaskType, t.GetConfig().IsRun, t.GetConfig().Interval, t.GetConfig().Express)
+  }
+  ```
+* 2018-09-19 12:00
 
 #### Version 0.8.2
 * 调整AddTask\RemoveTask\StartTask\StopTask\StopAllTask日志级别为info级别
