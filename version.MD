@@ -1,5 +1,9 @@
 ## devfeel/task
 
+#### Version 0.8.4
+* Bug Fixed: Auto restart task when task's app code panic error, if no auto restart, the goroutine will be stop
+* 2018-09-20 22:00
+
 #### Version 0.8.3
 * New feature: add TaskService.GetAllTasks() used to return all task info which type is map[string]Task
 * Example:

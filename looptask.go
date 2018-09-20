@@ -98,6 +98,9 @@ func startLoopTask(task *LoopTask) {
 				if task.taskService.ExceptionHandler != nil {
 					task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
 				}
+				//goroutine panic, restart cron task
+				startLoopTask(task)
+				task.taskService.Logger().Debug(task.TaskID, " goroutine panic, restart LoopTask")
 			}
 		}()
 		//do log

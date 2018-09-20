@@ -129,10 +129,13 @@ func startCronTask(task *CronTask) {
 			case <-task.TimeTicker.C:
 				defer func() {
 					if err := recover(); err != nil {
-						//task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
+						task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
 						if task.taskService.ExceptionHandler != nil {
 							task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
 						}
+						//goroutine panic, restart cron task
+						startCronTask(task)
+						task.taskService.Logger().Debug(task.TaskID, " goroutine panic, restart CronTask")
 					}
 				}()
 				now := time.Now()
