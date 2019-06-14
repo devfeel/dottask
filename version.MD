@@ -1,5 +1,9 @@
 ## devfeel/task
 
+#### Version 0.8.5
+* New feature: add support auto register queue task from config
+* 2019-06-14 15:00
+
 #### Version 0.8.4
 * Bug Fixed: Auto restart task when task's app code panic error, if no auto restart, the goroutine will be stop
 * 2018-09-20 22:00

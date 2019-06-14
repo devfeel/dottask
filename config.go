@@ -3,10 +3,10 @@ package task
 import (
 	"encoding/json"
 	"encoding/xml"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"gopkg.in/yaml.v2"
 )
 
 type (
@@ -25,6 +25,7 @@ type (
 			DueTime     int64  `xml:"duetime,attr" yaml:"duetime"` //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
 			Interval    int64  `xml:"interval,attr" yaml:"interval"`
 			Express     string `xml:"express,attr" yaml:"express"`
+			QueueSize   int64  `xml:"queuesize,attr" yaml:"queuesize"`
 			HandlerName string `xml:"handlername,attr" yaml:"handlername"`
 			HandlerData string `xml:"handlerdata,attr" yaml:"handlerdata"`
 		} `xml:"tasks>task" yaml:"tasks"`

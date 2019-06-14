@@ -17,8 +17,8 @@ const (
 )
 
 const (
-	TaskType_Loop = "loop"
-	TaskType_Cron = "cron"
+	TaskType_Loop  = "loop"
+	TaskType_Cron  = "cron"
 	TaskType_Queue = "queue"
 )
 
@@ -39,8 +39,6 @@ type (
 		SetTaskService(service *TaskService)
 		Reset(conf *TaskConfig) error
 	}
-
-
 
 	ExceptionHandleFunc func(*TaskContext, error)
 
@@ -126,6 +124,13 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 					service.Logger().Warn("CreateLoopTask failed [" + err.Error() + "] [" + fmt.Sprint(v) + "]")
 				} else {
 					service.Logger().Debug("CreateLoopTask success [" + fmt.Sprint(v) + "]")
+				}
+			} else if v.TaskType == TaskType_Queue && v.Interval > 0 {
+				_, err := service.CreateQueueTask(v.TaskID, v.IsRun, v.Interval, handler, v, v.QueueSize)
+				if err != nil {
+					service.Logger().Warn("CreateQueueTask failed [" + err.Error() + "] [" + fmt.Sprint(v) + "]")
+				} else {
+					service.Logger().Debug("CreateQueueTask success [" + fmt.Sprint(v) + "]")
 				}
 			} else {
 				service.Logger().Warn("CreateTask failed not match config [" + fmt.Sprint(v) + "]")
@@ -226,7 +231,7 @@ func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime in
 }
 
 // CreateQueueTask create new queuetask
-func (service *TaskService) CreateQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}, queueSize int) (Task, error){
+func (service *TaskService) CreateQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}, queueSize int64) (Task, error) {
 	context := new(TaskContext)
 	context.TaskID = taskID
 	context.TaskData = taskData
@@ -245,8 +250,6 @@ func (service *TaskService) CreateQueueTask(taskID string, isRun bool, interval 
 	service.AddTask(task)
 	return task, nil
 }
-
-
 
 // GetTask get TaskInfo by TaskID
 func (service *TaskService) GetTask(taskID string) (t Task, exists bool) {
@@ -288,12 +291,10 @@ func (service *TaskService) PrintAllCronTask() string {
 	return body
 }
 
-
 // GetAllTasks get all tasks
 func (service *TaskService) GetAllTasks() map[string]Task {
 	return service.taskMap
 }
-
 
 // RemoveAllTask remove all task
 func (service *TaskService) RemoveAllTask() {
