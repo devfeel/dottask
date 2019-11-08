@@ -2,11 +2,9 @@ package task
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"runtime/debug"
 	"strconv"
-	"strings"
 	"sync"
 )
 
@@ -28,6 +26,11 @@ const (
 	ConfigType_Yaml = "yaml"
 )
 
+const (
+	defaultCounterTaskName = "TASK_DEFAULT_COUNTERINFO"
+	fullTimeLayout         = "2006-01-02 15:04:05.9999"
+)
+
 type (
 	Task interface {
 		TaskID() string
@@ -38,6 +41,7 @@ type (
 		RunOnce() error
 		SetTaskService(service *TaskService)
 		Reset(conf *TaskConfig) error
+		CounterInfo() *CounterInfo
 	}
 
 	ExceptionHandleFunc func(*TaskContext, error)
@@ -47,11 +51,12 @@ type (
 		Config           *AppConfig
 		taskMap          map[string]Task
 		taskMutex        *sync.RWMutex
+		counterTask      Task
 		logger           Logger
 		handlerMap       map[string]TaskHandle
 		handlerMutex     *sync.RWMutex
 		ExceptionHandler ExceptionHandleFunc
-		OnBeforHandler   TaskHandle
+		OnBeforeHandler  TaskHandle
 		OnEndHandler     TaskHandle
 	}
 )
@@ -68,6 +73,13 @@ func StartNewService() *TaskService {
 	service.handlerMutex = new(sync.RWMutex)
 	service.handlerMap = make(map[string]TaskHandle)
 	service.ExceptionHandler = defaultExceptionHandler
+	counterTask, err := NewCronTask(defaultCounterTaskName, true, "0 * * * * *", service.defaultLogCounterInfo, nil)
+	if err != nil {
+		fmt.Println("Init Counter Task error", err)
+	}
+	counterTask.SetTaskService(service)
+	counterTask.Start()
+	service.counterTask = counterTask
 	return service
 }
 
@@ -77,8 +89,8 @@ func (service *TaskService) SetExceptionHandler(handler ExceptionHandleFunc) {
 }
 
 // SetOnBeforHandler set handler which exec before task run
-func (service *TaskService) SetOnBeforHandler(handler TaskHandle) {
-	service.OnBeforHandler = handler
+func (service *TaskService) SetOnBeforeHandler(handler TaskHandle) {
+	service.OnBeforeHandler = handler
 }
 
 // SetOnEndHandler set handler which exec after task run
@@ -172,81 +184,44 @@ func (service *TaskService) Logger() Logger {
 	return service.logger
 }
 
-// CreateCronTask create new crontask
+// CreateCronTask create new cron task and register to task service
 func (service *TaskService) CreateCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (Task, error) {
-	context := new(TaskContext)
-	context.TaskID = taskID
-	context.TaskData = taskData
-
-	task := new(CronTask)
-	task.taskID = context.TaskID
-	task.TaskType = TaskType_Cron
-	task.IsRun = isRun
-	task.handler = handler
-	task.RawExpress = express
-	expresslist := strings.Split(express, " ")
-	if len(expresslist) != 6 {
-		return nil, errors.New("express is wrong format => not 6 parts")
+	task, err := NewCronTask(taskID, isRun, express, handler, taskData)
+	if err != nil {
+		return task, err
 	}
-	task.time_WeekDay = parseExpress(expresslist[5], ExpressType_WeekDay)
-	service.debugExpress(task.time_WeekDay)
-	task.time_Month = parseExpress(expresslist[4], ExpressType_Month)
-	service.debugExpress(task.time_Month)
-	task.time_Day = parseExpress(expresslist[3], ExpressType_Day)
-	service.debugExpress(task.time_Day)
-	task.time_Hour = parseExpress(expresslist[2], ExpressType_Hour)
-	service.debugExpress(task.time_Hour)
-	task.time_Minute = parseExpress(expresslist[1], ExpressType_Minute)
-	service.debugExpress(task.time_Minute)
-	task.time_Second = parseExpress(expresslist[0], ExpressType_Second)
-	service.debugExpress(task.time_Second)
 
-	task.State = TaskState_Init
-	task.context = context
+	service.debugExpress(task.(*CronTask).time_WeekDay)
+	service.debugExpress(task.(*CronTask).time_Month)
+	service.debugExpress(task.(*CronTask).time_Day)
+	service.debugExpress(task.(*CronTask).time_Hour)
+	service.debugExpress(task.(*CronTask).time_Minute)
+	service.debugExpress(task.(*CronTask).time_Second)
+
 	task.SetTaskService(service)
-
 	service.AddTask(task)
 	return task, nil
 }
 
-// CreateLoopTask create new looptask
+// CreateLoopTask create new loop task and register to task service
 func (service *TaskService) CreateLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handler TaskHandle, taskData interface{}) (Task, error) {
-	context := new(TaskContext)
-	context.TaskID = taskID
-	context.TaskData = taskData
-
-	task := new(LoopTask)
-	task.taskID = context.TaskID
-	task.TaskType = TaskType_Loop
-	task.IsRun = isRun
-	task.handler = handler
-	task.DueTime = dueTime
-	task.Interval = interval
-	task.State = TaskState_Init
-	task.context = context
+	task, err := NewLoopTask(taskID, isRun, dueTime, interval, handler, taskData)
+	if err != nil {
+		return task, err
+	}
 	task.SetTaskService(service)
-
 	service.AddTask(task)
 	return task, nil
 }
 
-// CreateQueueTask create new queuetask
+// CreateQueueTask create new queue task and register to task service
 func (service *TaskService) CreateQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}, queueSize int64) (Task, error) {
-	context := new(TaskContext)
-	context.TaskID = taskID
-	context.TaskData = taskData
+	task, err := NewQueueTask(taskID, isRun, interval, handler, taskData, queueSize)
+	if err != nil {
+		return task, err
+	}
 
-	task := new(QueueTask)
-	task.taskID = context.TaskID
-	task.TaskType = TaskType_Queue
-	task.IsRun = isRun
-	task.handler = handler
-	task.Interval = interval
-	task.State = TaskState_Init
-	task.context = context
-	task.MessageChan = make(chan interface{}, queueSize)
 	task.SetTaskService(service)
-
 	service.AddTask(task)
 	return task, nil
 }
@@ -281,7 +256,8 @@ func (service *TaskService) Count() int {
 	return len(service.taskMap)
 }
 
-// PrintAllCronTask print all task
+// PrintAllCronTask print all task info
+// Deprecated: Use the PrintAllTasks instead
 func (service *TaskService) PrintAllCronTask() string {
 	body := ""
 	for _, v := range service.taskMap {
@@ -289,6 +265,36 @@ func (service *TaskService) PrintAllCronTask() string {
 		body += string(str) + "\r\n"
 	}
 	return body
+}
+
+// PrintAllCronTask print all task info
+func (service *TaskService) PrintAllTasks() string {
+	body := ""
+	for _, v := range service.taskMap {
+		str, _ := json.Marshal(v)
+		body += string(str) + "\r\n"
+	}
+	return body
+}
+
+// PrintTaskCountData print all task counter data
+func (service *TaskService) PrintAllTaskCounterInfo() string {
+	body := ""
+	for _, v := range service.taskMap {
+		body += fmt.Sprintln(v.TaskID(), "Run", v.CounterInfo().RunCounter.Count())
+		body += fmt.Sprintln(v.TaskID(), "Error", v.CounterInfo().ErrorCounter.Count())
+	}
+	return body
+}
+
+// GetAllTaskCounterInfo return all show count info
+func (service *TaskService) GetAllTaskCountInfo() []ShowCountInfo {
+	showInfos := []ShowCountInfo{}
+	for _, t := range service.GetAllTasks() {
+		showInfos = append(showInfos, ShowCountInfo{TaskID: t.TaskID(), Lable: "RUN", Count: t.CounterInfo().RunCounter.Count()})
+		showInfos = append(showInfos, ShowCountInfo{TaskID: t.TaskID(), Lable: "ERROR", Count: t.CounterInfo().ErrorCounter.Count()})
+	}
+	return showInfos
 }
 
 // GetAllTasks get all tasks
@@ -325,4 +331,16 @@ func (service *TaskService) StartAllTask() {
 
 func (service *TaskService) debugExpress(set *ExpressSet) {
 	service.Logger().Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
+}
+
+func (service *TaskService) defaultLogCounterInfo(ctx *TaskContext) error {
+	showInfos := []*ShowCountInfo{}
+	for _, t := range service.GetAllTasks() {
+		//service.Logger().Debug(t.TaskID(), " Start:", t.CounterInfo().StartTime.Format(fullTimeLayout), " RUN:", t.CounterInfo().RunCounter.Count(), " ERROR:", t.CounterInfo().ErrorCounter.Count())
+		showInfos = append(showInfos, &ShowCountInfo{TaskID: t.TaskID(), Lable: "RUN", Count: t.CounterInfo().RunCounter.Count()})
+		showInfos = append(showInfos, &ShowCountInfo{TaskID: t.TaskID(), Lable: "ERROR", Count: t.CounterInfo().ErrorCounter.Count()})
+	}
+	str, _ := json.Marshal(showInfos)
+	service.Logger().Debug(string(str))
+	return nil
 }

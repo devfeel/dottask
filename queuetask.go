@@ -1,26 +1,25 @@
 package task
 
 import (
-	"time"
-	"fmt"
 	"errors"
+	"fmt"
+	"time"
 )
-
 
 const (
 	DefaultQueueSize = 1000
 )
-type(
-	QueueTask struct{
+
+type (
+	QueueTask struct {
 		TaskInfo
-		Interval     int64        //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop||TaskType_Queue时有效
+		Interval    int64 //运行间隔时间，单位毫秒，当TaskType==TaskType_Loop||TaskType_Queue时有效
 		MessageChan chan interface{}
 	}
 )
 
-
 //EnQueue enqueue value into message queue
-func (task *QueueTask) EnQueue(value interface{}){
+func (task *QueueTask) EnQueue(value interface{}) {
 	task.MessageChan <- value
 }
 
@@ -43,16 +42,16 @@ func (task *QueueTask) RunOnce() error {
 }
 
 // GetConfig get task config info
-func (task *QueueTask) GetConfig() *TaskConfig{
+func (task *QueueTask) GetConfig() *TaskConfig {
 	return &TaskConfig{
-		TaskID:task.taskID,
-		TaskType:task.TaskType,
-		IsRun : task.IsRun,
-		Handler:task.handler,
-		DueTime:task.DueTime,
-		Interval:0,
-		Express:"",
-		TaskData:task.Context().TaskData,
+		TaskID:   task.taskID,
+		TaskType: task.TaskType,
+		IsRun:    task.IsRun,
+		Handler:  task.handler,
+		DueTime:  task.DueTime,
+		Interval: 0,
+		Express:  "",
+		TaskData: task.Context().TaskData,
 	}
 }
 
@@ -79,11 +78,32 @@ func (task *QueueTask) Reset(conf *TaskConfig) error {
 	return nil
 }
 
+// NewQueueTask create new queue task
+func NewQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}, queueSize int64) (Task, error) {
+	context := new(TaskContext)
+	context.TaskID = taskID
+	context.TaskData = taskData
+
+	task := new(QueueTask)
+	task.initCounters()
+	task.taskID = context.TaskID
+	task.TaskType = TaskType_Queue
+	task.IsRun = isRun
+	task.handler = handler
+	task.Interval = interval
+	task.State = TaskState_Init
+	task.context = context
+	task.MessageChan = make(chan interface{}, queueSize)
+	return task, nil
+}
+
 //start queue task
 func startQueueTask(task *QueueTask) {
 	handler := func() {
 		defer func() {
+			task.CounterInfo().RunCounter.Inc(1)
 			if err := recover(); err != nil {
+				task.CounterInfo().ErrorCounter.Inc(1)
 				if task.taskService.ExceptionHandler != nil {
 					task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
 				}
@@ -91,11 +111,11 @@ func startQueueTask(task *QueueTask) {
 		}()
 
 		//get value from message chan
-		message :=<- task.MessageChan
+		message := <-task.MessageChan
 		task.Context().Message = message
 
-		if task.taskService.OnBeforHandler != nil {
-			task.taskService.OnBeforHandler(task.Context())
+		if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
+			task.taskService.OnBeforeHandler(task.Context())
 		}
 
 		var err error
@@ -104,12 +124,13 @@ func startQueueTask(task *QueueTask) {
 		}
 
 		if err != nil {
-			if task.taskService.ExceptionHandler != nil {
+			task.CounterInfo().ErrorCounter.Inc(1)
+			if task.taskService != nil && task.taskService.ExceptionHandler != nil {
 				task.taskService.ExceptionHandler(task.Context(), err)
 			}
 		}
 
-		if task.taskService.OnEndHandler != nil {
+		if task.taskService != nil && task.taskService.OnEndHandler != nil {
 			task.taskService.OnEndHandler(task.Context())
 		}
 	}

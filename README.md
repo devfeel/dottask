@@ -13,6 +13,7 @@
 * 支持Exception、OnBegin、OnEnd注入点
 * 支持单独执行TaskHandler
 * 支持代码级重设Task的相关设置
+* 内建Task运行计数信息，包含执行与异常计数
 
 
 ## 安装：
@@ -64,9 +65,10 @@ func main() {
 	//step 3: start all task
 	service.StartAllTask()
 
-	fmt.Println(service.PrintAllCronTask())
+	fmt.Println(service.PrintAllTasks())
 
-	for true {
+	for {
+		time.Sleep(time.Hour)
 	}
 
 }
@@ -116,9 +118,10 @@ func main() {
 	//step 4: start all task
 	service.StartAllTask()
 
-	fmt.Println(service.PrintAllCronTask())
+	fmt.Println(service.PrintAllTasks())
 
-	for true {
+	for {
+		time.Sleep(time.Hour)
 	}
 }
 

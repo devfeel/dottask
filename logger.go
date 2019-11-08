@@ -48,7 +48,6 @@ func (logger *fmtLogger) Error(v ...interface{}) {
 
 func (logger *fmtLogger) writeLog(log string, level string) {
 	logStr := time.Now().Format(defaultFullTimeLayout) + " " + log
-	logStr += "\r\n"
 	fmt.Println(logStr)
 }
 

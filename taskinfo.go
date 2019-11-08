@@ -13,22 +13,24 @@ const (
 type (
 	//TaskInfo task info define
 	TaskInfo struct {
-		taskID       string `json:"taskid"`
-		IsRun        bool   `json:"isrun"`
-		taskService  *TaskService
-		mutex        sync.RWMutex
-		TimeTicker   *time.Ticker `json:"-"`
-		TaskType     string       `json:"tasktype"`
-		handler      TaskHandle
-		context      *TaskContext `json:"context"`
-		State        string       `json:"state"`    //匹配 TskState_Init、TaskState_Run、TaskState_Stop
-		DueTime      int64        `json:"duetime"`  //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
+		taskID      string `json:"taskid"`
+		IsRun       bool   `json:"isrun"`
+		taskService *TaskService
+		mutex       sync.RWMutex
+		TimeTicker  *time.Ticker `json:"-"`
+		TaskType    string       `json:"tasktype"`
+		handler     TaskHandle
+		context     *TaskContext `json:"context"`
+		State       string       `json:"state"`   //匹配 TskState_Init、TaskState_Run、TaskState_Stop
+		DueTime     int64        `json:"duetime"` //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
+
+		counters *CounterInfo
 	}
 
 	//TaskConfig task config
 	TaskConfig struct {
 		TaskID   string
-		TaskType     string
+		TaskType string
 		IsRun    bool
 		Handler  TaskHandle
 		DueTime  int64
@@ -41,13 +43,24 @@ type (
 	TaskContext struct {
 		TaskID   string
 		TaskData interface{} //用于当前Task全局设置的数据项
-		Message interface{} //用于每次Task执行上下文消息传输
-		IsEnd    bool //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
+		Message  interface{} //用于每次Task执行上下文消息传输
+		IsEnd    bool        //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
+	}
+
+	CounterInfo struct {
+		StartTime    time.Time
+		RunCounter   Counter
+		ErrorCounter Counter
+	}
+
+	ShowCountInfo struct {
+		TaskID string
+		Lable  string
+		Count  int64
 	}
 
 	TaskHandle func(*TaskContext) error
 )
-
 
 //Stop stop task
 func (task *TaskInfo) Stop() {
@@ -62,17 +75,17 @@ func (task *TaskInfo) Stop() {
 }
 
 //TaskID return taskID
-func (task *TaskInfo) TaskID() string{
+func (task *TaskInfo) TaskID() string {
 	return task.taskID
 }
 
 //Context return context
-func (task *TaskInfo) Context() *TaskContext{
+func (task *TaskInfo) Context() *TaskContext {
 	return task.context
 }
 
 //SetTaskService Set up the associated service
-func(task *TaskInfo) SetTaskService(service *TaskService){
+func (task *TaskInfo) SetTaskService(service *TaskService) {
 	task.taskService = service
 }
 
@@ -85,3 +98,14 @@ func (task *TaskInfo) RunOnce() error {
 	return err
 }
 
+func (task *TaskInfo) initCounters() {
+	counterInfo := new(CounterInfo)
+	counterInfo.StartTime = time.Now()
+	counterInfo.RunCounter = NewCounter()
+	counterInfo.ErrorCounter = NewCounter()
+	task.counters = counterInfo
+}
+
+func (task *TaskInfo) CounterInfo() *CounterInfo {
+	return task.counters
+}

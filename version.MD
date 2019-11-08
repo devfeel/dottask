@@ -1,4 +1,18 @@
-## devfeel/task
+## devfeel/dottask
+
+#### Version 0.9
+* feature: 新增计数器单元Counter，用于Task执行的统计度量
+* feature: 新增NewCronTask\NewLoopTask\NewQueueTask,用于创建独立的非强耦合TaskService的Task
+* feature: 新增TaskService.PrintAllTaskCounterInfo与GetAllTaskCountInfo用于获得计数数据
+* fix: 修复拼写错误，TaskService.OnBeforHandler修正为OnBeforeHandler
+* opt: 预处理拼写错误，TaskService.PrintAllCronTask设为下个版本失效，修正接口为PrintAllTasks
+* refactor: 重构CreateCronTask\CreateLoopTask\CreateQueueTask,内部调用相关New方法
+* About Counter:
+    - 每个Task拥有CounterInfo，内含RunCounter与ErrorCounter
+    - 每个Task在每次执行时会对执行次数以及发生error次数进行累加
+    - 通过TaskService.GetAllTaskCountInfo获取相关计数信息
+    - 通过TaskService.PrintAllTaskCounterInfo打印相关计数信息
+* 2019-11-09 01:00
 
 #### Version 0.8.5
 * New feature: add support auto register queue task from config

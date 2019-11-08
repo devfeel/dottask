@@ -1,17 +1,17 @@
 package task
 
 import (
-	"time"
+	"errors"
 	"fmt"
 	"strings"
-	"errors"
+	"time"
 )
 
 type (
 	//CronTask cron task info define
 	CronTask struct {
 		TaskInfo
-		RawExpress   string       `json:"express"`  //运行周期表达式，当TaskType==TaskType_Cron时有效
+		RawExpress   string `json:"express"` //运行周期表达式，当TaskType==TaskType_Cron时有效
 		time_WeekDay *ExpressSet
 		time_Month   *ExpressSet
 		time_Day     *ExpressSet
@@ -22,19 +22,18 @@ type (
 )
 
 // GetConfig get task config info
-func (task *CronTask) GetConfig() *TaskConfig{
-		return &TaskConfig{
-			TaskID:task.taskID,
-			TaskType:task.TaskType,
-			IsRun : task.IsRun,
-			Handler:task.handler,
-			DueTime:task.DueTime,
-			Interval:0,
-			Express:task.RawExpress,
-			TaskData:task.Context().TaskData,
-		}
+func (task *CronTask) GetConfig() *TaskConfig {
+	return &TaskConfig{
+		TaskID:   task.taskID,
+		TaskType: task.TaskType,
+		IsRun:    task.IsRun,
+		Handler:  task.handler,
+		DueTime:  task.DueTime,
+		Interval: 0,
+		Express:  task.RawExpress,
+		TaskData: task.Context().TaskData,
+	}
 }
-
 
 //Reset first check conf, then reload conf & restart task
 //special, TaskID can not be reset
@@ -54,7 +53,6 @@ func (task *CronTask) Reset(conf *TaskConfig) error {
 		task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
 		return errors.New("express is wrong format => not 6 parts")
 	}
-
 
 	//restart task
 	task.Stop()
@@ -86,7 +84,6 @@ func (task *CronTask) Reset(conf *TaskConfig) error {
 	return nil
 }
 
-
 //Start start task
 func (task *CronTask) Start() {
 	if !task.IsRun {
@@ -102,7 +99,6 @@ func (task *CronTask) Start() {
 	}
 }
 
-
 // RunOnce do task only once
 // no match Express or Interval
 // no recover panic
@@ -112,9 +108,34 @@ func (task *CronTask) RunOnce() error {
 	return err
 }
 
+// NewCronTask create new cron task
+func NewCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (Task, error) {
+	context := new(TaskContext)
+	context.TaskID = taskID
+	context.TaskData = taskData
 
+	task := new(CronTask)
+	task.initCounters()
+	task.taskID = context.TaskID
+	task.TaskType = TaskType_Cron
+	task.IsRun = isRun
+	task.handler = handler
+	task.RawExpress = express
+	expresslist := strings.Split(express, " ")
+	if len(expresslist) != 6 {
+		return nil, errors.New("express is wrong format => not 6 parts")
+	}
+	task.time_WeekDay = parseExpress(expresslist[5], ExpressType_WeekDay)
+	task.time_Month = parseExpress(expresslist[4], ExpressType_Month)
+	task.time_Day = parseExpress(expresslist[3], ExpressType_Day)
+	task.time_Hour = parseExpress(expresslist[2], ExpressType_Hour)
+	task.time_Minute = parseExpress(expresslist[1], ExpressType_Minute)
+	task.time_Second = parseExpress(expresslist[0], ExpressType_Second)
 
-
+	task.State = TaskState_Init
+	task.context = context
+	return task, nil
+}
 
 //start cron task
 func startCronTask(task *CronTask) {
@@ -128,7 +149,9 @@ func startCronTask(task *CronTask) {
 			select {
 			case <-task.TimeTicker.C:
 				defer func() {
+					task.CounterInfo().RunCounter.Inc(1)
 					if err := recover(); err != nil {
+						task.CounterInfo().ErrorCounter.Inc(1)
 						task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
 						if task.taskService.ExceptionHandler != nil {
 							task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
@@ -147,19 +170,20 @@ func startCronTask(task *CronTask) {
 					task.time_Second.IsMatch(now) {
 					//do log
 					//task.taskService.Logger().Debug(task.TaskID, " begin dohandler")
-					if task.taskService.OnBeforHandler != nil {
-						task.taskService.OnBeforHandler(task.Context())
+					if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
+						task.taskService.OnBeforeHandler(task.Context())
 					}
 					var err error
 					if !task.Context().IsEnd {
 						err = task.handler(task.Context())
 					}
 					if err != nil {
-						if task.taskService.ExceptionHandler != nil {
+						task.CounterInfo().ErrorCounter.Inc(1)
+						if task.taskService != nil && task.taskService.ExceptionHandler != nil {
 							task.taskService.ExceptionHandler(task.Context(), err)
 						}
 					}
-					if task.taskService.OnEndHandler != nil {
+					if task.taskService != nil && task.taskService.OnEndHandler != nil {
 						task.taskService.OnEndHandler(task.Context())
 					}
 				}
@@ -167,4 +191,3 @@ func startCronTask(task *CronTask) {
 		}
 	}()
 }
-

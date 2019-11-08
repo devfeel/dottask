@@ -8,6 +8,8 @@ import (
 
 var service *TaskService
 
+const fullTimeLayout = "2006-01-02 15:04:05.9999"
+
 func Job_Test(ctx *TaskContext) error {
 	fmt.Println(time.Now().String(), " => Job_Test")
 	//time.Sleep(time.Second * 3)
@@ -46,7 +48,7 @@ func main() {
 	service.StartAllTask()
 
 	service.SetExceptionHandler(errorHandler)
-	//service.SetOnBeforHandler(beginHandler)
+	//service.SetOnBeforeHandler(beginHandler)
 	//service.SetOnEndHandler(endHandler)
 
 	t, exists := service.GetTask("testloop")
@@ -57,12 +59,11 @@ func main() {
 		}
 	}
 
-	fmt.Println(service.PrintAllCronTask())
+	fmt.Println(service.PrintAllTasks())
 
-	for _, t := range service.GetAllTasks(){
+	for _, t := range service.GetAllTasks() {
 		fmt.Println("GetAllTasks", t.TaskID(), t.GetConfig().TaskType, t.GetConfig().IsRun, t.GetConfig().Interval, t.GetConfig().Express)
 	}
-
 
 	t, exists = service.GetTask("testcron")
 	if exists {
@@ -75,6 +76,11 @@ func main() {
 			fmt.Println(t, "Reset error =>", err)
 		}
 	}
+
+	time.Sleep(time.Second * 20)
+
+	fmt.Println(service.PrintAllTaskCounterInfo())
+	fmt.Println(service.GetAllTaskCountInfo())
 
 	for {
 		time.Sleep(time.Hour)
