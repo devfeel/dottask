@@ -140,54 +140,59 @@ func NewCronTask(taskID string, isRun bool, express string, handler TaskHandle, 
 //start cron task
 func startCronTask(task *CronTask) {
 	now := time.Now()
-	nowsecond := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, time.Local)
-	afterTime := nowsecond.Add(time.Second).Sub(time.Now().Local())
+	nowSecond := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, time.Local)
+	afterTime := nowSecond.Add(time.Second).Sub(time.Now().Local())
 	task.TimeTicker = time.NewTicker(DefaultPeriod)
 	go func() {
 		time.Sleep(afterTime)
 		for {
 			select {
 			case <-task.TimeTicker.C:
-				defer func() {
-					task.CounterInfo().RunCounter.Inc(1)
-					if err := recover(); err != nil {
-						task.CounterInfo().ErrorCounter.Inc(1)
-						task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
-						if task.taskService.ExceptionHandler != nil {
-							task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
-						}
-						//goroutine panic, restart cron task
-						startCronTask(task)
-						task.taskService.Logger().Debug(task.TaskID, " goroutine panic, restart CronTask")
-					}
-				}()
-				now := time.Now()
-				if task.time_WeekDay.IsMatch(now) &&
-					task.time_Month.IsMatch(now) &&
-					task.time_Day.IsMatch(now) &&
-					task.time_Hour.IsMatch(now) &&
-					task.time_Minute.IsMatch(now) &&
-					task.time_Second.IsMatch(now) {
-					//do log
-					//task.taskService.Logger().Debug(task.TaskID, " begin dohandler")
-					if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
-						task.taskService.OnBeforeHandler(task.Context())
-					}
-					var err error
-					if !task.Context().IsEnd {
-						err = task.handler(task.Context())
-					}
-					if err != nil {
-						task.CounterInfo().ErrorCounter.Inc(1)
-						if task.taskService != nil && task.taskService.ExceptionHandler != nil {
-							task.taskService.ExceptionHandler(task.Context(), err)
-						}
-					}
-					if task.taskService != nil && task.taskService.OnEndHandler != nil {
-						task.taskService.OnEndHandler(task.Context())
-					}
-				}
+				doCronTask(task)
 			}
 		}
 	}()
+}
+
+func doCronTask(task *CronTask) {
+	defer func() {
+		if err := recover(); err != nil {
+			task.CounterInfo().ErrorCounter.Inc(1)
+			task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
+			if task.taskService.ExceptionHandler != nil {
+				task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
+			}
+			//goroutine panic, restart cron task
+			startCronTask(task)
+			task.taskService.Logger().Debug(task.TaskID, " goroutine panic, restart CronTask")
+		}
+	}()
+	now := time.Now()
+	if task.time_WeekDay.IsMatch(now) &&
+		task.time_Month.IsMatch(now) &&
+		task.time_Day.IsMatch(now) &&
+		task.time_Hour.IsMatch(now) &&
+		task.time_Minute.IsMatch(now) &&
+		task.time_Second.IsMatch(now) {
+
+		//inc run counter
+		task.CounterInfo().RunCounter.Inc(1)
+		//do log
+		if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
+			task.taskService.OnBeforeHandler(task.Context())
+		}
+		var err error
+		if !task.Context().IsEnd {
+			err = task.handler(task.Context())
+		}
+		if err != nil {
+			task.CounterInfo().ErrorCounter.Inc(1)
+			if task.taskService != nil && task.taskService.ExceptionHandler != nil {
+				task.taskService.ExceptionHandler(task.Context(), err)
+			}
+		}
+		if task.taskService != nil && task.taskService.OnEndHandler != nil {
+			task.taskService.OnEndHandler(task.Context())
+		}
+	}
 }

@@ -14,6 +14,7 @@
 * 支持单独执行TaskHandler
 * 支持代码级重设Task的相关设置
 * 内建Task运行计数信息，包含执行与异常计数
+* 内建针对Task与Counter的OutputHttpHandler,可方便与WebServer自动集成
 
 
 ## 安装：
