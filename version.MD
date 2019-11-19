@@ -1,5 +1,13 @@
 ## devfeel/dottask
 
+#### Version 0.9.2
+* Opt: CounterOutputHttpHandler、TaskOutputHttpHandler输出UI优化
+* About HttpOutput:
+    - CounterOutputHttpHandler: 用于输出当前时刻所有Task的Counter信息
+    - TaskOutputHttpHandler: 用于输出所有Task的配置信息
+    - Code Example Link: https://github.com/devfeel/dotweb-start/blob/master/server/router.go#L20
+* 2019-11-19 19:00
+
 #### Version 0.9.1
 * feature: 新增输出Task信息与Counter信息的go原生HandlerFunc
 * fix: 修复CronTask对RunCounter统计逻辑BUG
