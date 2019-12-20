@@ -30,13 +30,14 @@ func main() {
 		RegisterHandler("Loop_Config", Loop_Config).
 
 		//step 3: load config file
-		LoadConfig("d:/gotmp/task/task.json.conf", ConfigType_Json).
+		LoadFileConfig("c:/gotmp/task/task.json.conf", ConfigType_Json).
 
 		//step 4: start all task
 		StartAllTask()
 
-	fmt.Println(service.PrintAllCronTask())
+	fmt.Println(service.PrintAllTasks())
 
-	for true {
+	for {
+		time.Sleep(time.Hour)
 	}
 }

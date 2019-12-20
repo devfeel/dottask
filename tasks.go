@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -99,7 +100,13 @@ func (service *TaskService) SetOnEndHandler(handler TaskHandle) {
 }
 
 // LoadConfig 如果指定配置文件，初始化配置
+// Deprecated: Use the LoadFileConfig instead
 func (service *TaskService) LoadConfig(configFile string, confType ...interface{}) *TaskService {
+	return service.LoadFileConfig(configFile, confType...)
+}
+
+// LoadFileConfig 如果指定配置文件，初始化配置
+func (service *TaskService) LoadFileConfig(configFile string, confType ...interface{}) *TaskService {
 	cType := ConfigType_Xml
 	if len(confType) > 0 && confType[0] == ConfigType_Json {
 		cType = ConfigType_Json
@@ -107,13 +114,21 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 	if len(confType) > 0 && confType[0] == ConfigType_Yaml {
 		cType = ConfigType_Yaml
 	}
+	var config *AppConfig
 	if cType == ConfigType_Json {
-		service.Config = InitJsonConfig(configFile)
+		config = JsonConfigHandler(configFile)
 	} else if cType == ConfigType_Yaml {
-		service.Config = InitYamlConfig(configFile)
+		config = YamlConfigHandler(configFile)
 	} else {
-		service.Config = InitConfig(configFile)
+		config = XmlConfigHandler(configFile)
 	}
+	service.applyConfig(config)
+	return service
+}
+
+// applyConfig apply task config with AppConfig
+func (service *TaskService) applyConfig(config *AppConfig) *TaskService {
+	service.Config = config
 	if service.logger == nil {
 		if service.Config.Global.LogPath != "" {
 			service.SetLogger(NewFileLogger(service.Config.Global.LogPath))
@@ -151,6 +166,18 @@ func (service *TaskService) LoadConfig(configFile string, confType ...interface{
 		} else {
 			service.Logger().Warn("CreateTask failed not exists handler [" + fmt.Sprint(v) + "]")
 		}
+	}
+	return service
+}
+
+// LoadConfigHandler load config handler and init task config
+func (service *TaskService) LoadConfigHandler(configHandler ConfigHandle, configSource string) *TaskService {
+	config, err := configHandler(configSource)
+	if err != nil {
+		panic("Task:LoadConfigHandler 配置源[" + configSource + "]解析失败: " + err.Error())
+		os.Exit(1)
+	} else {
+		service.applyConfig(config)
 	}
 	return service
 }

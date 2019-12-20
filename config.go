@@ -30,10 +30,12 @@ type (
 			HandlerData string `xml:"handlerdata,attr" yaml:"handlerdata"`
 		} `xml:"tasks>task" yaml:"tasks"`
 	}
+
+	ConfigHandle func(configSource string) (*AppConfig, error)
 )
 
 //初始化配置文件（xml）
-func InitConfig(configFile string) *AppConfig {
+func XmlConfigHandler(configFile string) *AppConfig {
 	realFile, exists := lookupFile(configFile)
 	if !exists {
 		panic("Task:Config:InitConfig 配置文件[" + configFile + "]无法解析 - 无法寻找到指定配置文件")
@@ -56,7 +58,7 @@ func InitConfig(configFile string) *AppConfig {
 }
 
 //初始化配置文件（json）
-func InitJsonConfig(configFile string) *AppConfig {
+func JsonConfigHandler(configFile string) *AppConfig {
 	realFile, exists := lookupFile(configFile)
 	if !exists {
 		panic("Task:Config:InitConfig 配置文件[" + configFile + "]无法解析 - 无法寻找到指定配置文件")
@@ -78,7 +80,7 @@ func InitJsonConfig(configFile string) *AppConfig {
 }
 
 //初始化配置文件（yaml）
-func InitYamlConfig(configFile string) *AppConfig {
+func YamlConfigHandler(configFile string) *AppConfig {
 	realFile, exists := lookupFile(configFile)
 	if !exists {
 		panic("Task:Config:InitConfig 配置文件[" + configFile + "]无法解析 - 无法寻找到指定配置文件")

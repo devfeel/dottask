@@ -1,5 +1,12 @@
 ## devfeel/dottask
 
+#### Version 0.9.3
+* Opt: 完善config模块，优化config注入模式
+* Opt: 增加ConfigHandle函数定义,用于应用自定义config加载实现(如从redis\mysql等源读取配置)
+* feature: 新增LoadFileConfig用于逐步替换原LoadConfig,主要用于读取xml\json\yaml格式配置文件
+* feature: 新增LoadConfigHandler用于应用自定义配置加载方式的注入
+* 2019-12-20 09:00 at ShangHai
+
 #### Version 0.9.2
 * Opt: CounterOutputHttpHandler、TaskOutputHttpHandler输出UI优化
 * About HttpOutput:

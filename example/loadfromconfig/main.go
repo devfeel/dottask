@@ -32,13 +32,13 @@ func main() {
 	RegisterTask(service)
 
 	//step 3: load config file
-	service.LoadConfig("d:/gotmp/dottask/task.conf")
+	service.LoadFileConfig("c:/gotmp/dottask/task.conf")
 
 	fmt.Println(time.Now().String(), " => Begin Task")
 	//step 4: start all task
 	service.StartAllTask()
 
-	fmt.Println(service.PrintAllCronTask())
+	fmt.Println(service.PrintAllTasks())
 
 	for {
 		time.Sleep(time.Hour)
