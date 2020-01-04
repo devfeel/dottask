@@ -233,12 +233,12 @@ func (service *TaskService) CreateCronTask(taskID string, isRun bool, express st
 		return task, err
 	}
 
-	service.debugExpress(task.(*CronTask).time_WeekDay)
-	service.debugExpress(task.(*CronTask).time_Month)
-	service.debugExpress(task.(*CronTask).time_Day)
-	service.debugExpress(task.(*CronTask).time_Hour)
-	service.debugExpress(task.(*CronTask).time_Minute)
-	service.debugExpress(task.(*CronTask).time_Second)
+	//service.debugExpress(task.(*CronTask).time_WeekDay)
+	//service.debugExpress(task.(*CronTask).time_Month)
+	//service.debugExpress(task.(*CronTask).time_Day)
+	//service.debugExpress(task.(*CronTask).time_Hour)
+	//service.debugExpress(task.(*CronTask).time_Minute)
+	//service.debugExpress(task.(*CronTask).time_Second)
 
 	task.SetTaskService(service)
 	service.AddTask(task)
