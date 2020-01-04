@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -31,6 +32,8 @@ const (
 	defaultCounterTaskName = "TASK_DEFAULT_COUNTERINFO"
 	fullTimeLayout         = "2006-01-02 15:04:05.9999"
 )
+
+var ErrNotSupportTaskType = errors.New("not support task type")
 
 type (
 	Task interface {
@@ -209,6 +212,18 @@ func (service *TaskService) Logger() Logger {
 		service.logger = NewFmtLogger()
 	}
 	return service.logger
+}
+
+// CreateTask create new task with TaskConfig and register to task service
+func (service *TaskService) CreateTask(config TaskConfig) (Task, error) {
+	if config.TaskType == TaskType_Cron {
+		return service.CreateCronTask(config.TaskID, config.IsRun, config.Express, config.Handler, config.TaskData)
+	} else if config.TaskType == TaskType_Loop {
+		return service.CreateLoopTask(config.TaskID, config.IsRun, config.DueTime, config.Interval, config.Handler, config.TaskData)
+	} else if config.TaskType == TaskType_Loop {
+		return service.CreateLoopTask(config.TaskID, config.IsRun, config.DueTime, config.Interval, config.Handler, config.TaskData)
+	}
+	return nil, ErrNotSupportTaskType
 }
 
 // CreateCronTask create new cron task and register to task service

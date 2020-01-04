@@ -1,5 +1,15 @@
 ## devfeel/dottask
 
+#### Version 0.9.4
+* feature: 新增CreateTask用于根据TaskConfig对象创建对应的Task
+* Opt: 新增ErrNotSupportTaskType异常变量
+* About CreateTask：
+    - Define: CreateTask(config TaskConfig) (Task, error)
+    - 支持cron\loop\queue三类Task的创建
+    - 定义错误的Task类型时将返回ErrNotSupportTaskType
+* Opt: 整理代码格式
+* 2020-01-04 09:00 at ShangHai
+
 #### Version 0.9.3
 * Opt: 完善config模块，优化config注入模式
 * Opt: 增加ConfigHandle函数定义,用于应用自定义config加载实现(如从redis\mysql等源读取配置)

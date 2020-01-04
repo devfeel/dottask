@@ -7,7 +7,8 @@ import (
 )
 
 var service *TaskService
-const(
+
+const (
 	taskName = "TestQueue"
 )
 
@@ -21,7 +22,7 @@ func Job_DealMessage(ctx *TaskContext) error {
 }
 
 func enqueeMessage() {
-	for i:=0;i<100;i++ {
+	for i := 0; i < 100; i++ {
 		t, exists := service.GetTask(taskName)
 		if exists {
 			qTask := t.(*QueueTask)
@@ -40,7 +41,7 @@ func main() {
 	qTask, err := service.CreateQueueTask(taskName, true, 1, Job_DealMessage, nil, DefaultQueueSize)
 	if err != nil {
 		fmt.Println("service.CreateQueueTask error! => ", err.Error())
-	}else{
+	} else {
 		fmt.Println("service.CreateQueueTask success! => ", qTask.TaskID())
 	}
 
@@ -53,7 +54,7 @@ func main() {
 		err = t.RunOnce()
 		if err != nil {
 			fmt.Println(t.Context(), "RunOnce error =>", err)
-		}else{
+		} else {
 			fmt.Println(t.Context(), "RunOnce success")
 		}
 	}
@@ -63,20 +64,21 @@ func main() {
 	t, exists = service.GetTask(taskName)
 	if exists {
 		conf := &TaskConfig{
-			IsRun:   true,
-			Interval:1000,
+			IsRun:    true,
+			Interval: 1000,
 		}
 		err = t.Reset(conf)
 		if err != nil {
 			fmt.Println(t, "Reset error =>", err)
-		}else{
+		} else {
 			fmt.Println(t, "Reset success ")
 		}
 	}
 
 	go enqueeMessage()
 
-	for true {
+	for {
+		time.Sleep(time.Hour)
 	}
 
 }
