@@ -45,12 +45,12 @@ func (task *CronTask) Reset(conf *TaskConfig) error {
 	//basic check
 	if conf.Express == "" {
 		errmsg := "express is empty"
-		task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+		task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "error", errmsg))
 		return errors.New(errmsg)
 	}
 	if len(expresslist) != 6 {
 		errmsg := "express is wrong format => not 6 parts"
-		task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+		task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "error", errmsg))
 		return errors.New("express is wrong format => not 6 parts")
 	}
 
@@ -80,7 +80,7 @@ func (task *CronTask) Reset(conf *TaskConfig) error {
 		task.taskService.debugExpress(task.time_Second)
 	}
 	task.Start()
-	task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "success")
+	task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "success"))
 	return nil
 }
 
@@ -158,13 +158,13 @@ func doCronTask(task *CronTask) {
 	defer func() {
 		if err := recover(); err != nil {
 			task.CounterInfo().ErrorCounter.Inc(1)
-			task.taskService.Logger().Debug(task.TaskID, " cron handler recover error => ", err)
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " cron handler recover error => ", err))
 			if task.taskService.ExceptionHandler != nil {
 				task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
 			}
 			//goroutine panic, restart cron task
 			startCronTask(task)
-			task.taskService.Logger().Debug(task.TaskID, " goroutine panic, restart CronTask")
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " goroutine panic, restart CronTask"))
 		}
 	}()
 	now := time.Now()

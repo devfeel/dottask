@@ -35,13 +35,13 @@ func (task *LoopTask) GetConfig() *TaskConfig {
 func (task *LoopTask) Reset(conf *TaskConfig) error {
 	if conf.DueTime < 0 {
 		errmsg := "DueTime is wrong format => must bigger or equal then zero"
-		task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+		task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "error", errmsg))
 		return errors.New(errmsg)
 	}
 
 	if conf.Interval <= 0 {
 		errmsg := "interval is wrong format => must bigger then zero"
-		task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+		task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "error", errmsg))
 		return errors.New(errmsg)
 	}
 	//restart task
@@ -56,7 +56,7 @@ func (task *LoopTask) Reset(conf *TaskConfig) error {
 	task.DueTime = conf.DueTime
 	task.Interval = conf.Interval
 	task.Start()
-	task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "success")
+	task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "success"))
 	return nil
 }
 
@@ -116,7 +116,7 @@ func startLoopTask(task *LoopTask) {
 				}
 				//goroutine panic, restart cron task
 				startLoopTask(task)
-				task.taskService.Logger().Debug(task.TaskID, " goroutine panic, restart LoopTask")
+				task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " goroutine panic, restart LoopTask"))
 			}
 		}()
 		//do log

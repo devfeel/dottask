@@ -15,10 +15,10 @@ const (
 
 type (
 	Logger interface {
-		Error(v ...interface{})
-		Warn(v ...interface{})
-		Info(v ...interface{})
-		Debug(v ...interface{})
+		Error(err error, v interface{})
+		Warn(v interface{})
+		Info(v interface{})
+		Debug(v interface{})
 	}
 
 	fileLogger struct {
@@ -33,17 +33,17 @@ func NewFmtLogger() *fmtLogger {
 	return &fmtLogger{}
 }
 
-func (logger *fmtLogger) Debug(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "debug")
+func (logger *fmtLogger) Debug(v interface{}) {
+	logger.writeLog(fmt.Sprint(v), "debug")
 }
-func (logger *fmtLogger) Info(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "info")
+func (logger *fmtLogger) Info(v interface{}) {
+	logger.writeLog(fmt.Sprint(v), "info")
 }
-func (logger *fmtLogger) Warn(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "warn")
+func (logger *fmtLogger) Warn(v interface{}) {
+	logger.writeLog(fmt.Sprint(v), "warn")
 }
-func (logger *fmtLogger) Error(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "error")
+func (logger *fmtLogger) Error(err error, v interface{}) {
+	logger.writeLog(fmt.Sprint(v, err), "error")
 }
 
 func (logger *fmtLogger) writeLog(log string, level string) {
@@ -61,17 +61,17 @@ func NewFileLogger(filePath string) *fileLogger {
 	return logger
 }
 
-func (logger *fileLogger) Debug(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "debug")
+func (logger *fileLogger) Debug(v interface{}) {
+	logger.writeLog(fmt.Sprint(v), "debug")
 }
-func (logger *fileLogger) Info(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "info")
+func (logger *fileLogger) Info(v interface{}) {
+	logger.writeLog(fmt.Sprint(v), "info")
 }
-func (logger *fileLogger) Warn(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "warn")
+func (logger *fileLogger) Warn(v interface{}) {
+	logger.writeLog(fmt.Sprint(v), "warn")
 }
-func (logger *fileLogger) Error(v ...interface{}) {
-	logger.writeLog(fmt.Sprint(v...), "error")
+func (logger *fileLogger) Error(err error, v interface{}) {
+	logger.writeLog(fmt.Sprint(v, err), "error")
 }
 
 func (logger *fileLogger) writeLog(log string, level string) {

@@ -1,5 +1,10 @@
 ## devfeel/dottask
 
+#### Version 0.9.5
+* Opt: 修正Logger定义，与dotlog适配
+* Opt: 整理代码格式
+* 2020-01-05 09:00 at ShangHai
+
 #### Version 0.9.4
 * feature: 新增CreateTask用于根据TaskConfig对象创建对应的Task
 * Opt: 新增ErrNotSupportTaskType异常变量

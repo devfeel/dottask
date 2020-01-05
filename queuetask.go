@@ -59,7 +59,7 @@ func (task *QueueTask) GetConfig() *TaskConfig {
 func (task *QueueTask) Reset(conf *TaskConfig) error {
 	if conf.Interval <= 0 {
 		errmsg := "interval is wrong format => must bigger then zero"
-		task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "error", errmsg)
+		task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "error", errmsg))
 		return errors.New(errmsg)
 	}
 
@@ -74,7 +74,7 @@ func (task *QueueTask) Reset(conf *TaskConfig) error {
 	}
 	task.Interval = conf.Interval
 	task.Start()
-	task.taskService.Logger().Debug("TaskInfo:Reset ", task, conf, "success")
+	task.taskService.Logger().Debug(fmt.Sprint("TaskInfo:Reset ", task, conf, "success"))
 	return nil
 }
 

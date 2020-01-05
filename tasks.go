@@ -282,7 +282,7 @@ func (service *TaskService) AddTask(t Task) {
 	service.taskMap[t.TaskID()] = t
 	service.taskMutex.Unlock()
 
-	service.Logger().Info("Task:AddTask => ", t.TaskID(), t.GetConfig())
+	service.Logger().Info(fmt.Sprint("Task:AddTask => ", t.TaskID(), t.GetConfig()))
 }
 
 // RemoveTask remove task by taskid
@@ -290,7 +290,7 @@ func (service *TaskService) RemoveTask(taskID string) {
 	service.taskMutex.Lock()
 	delete(service.taskMap, taskID)
 	service.taskMutex.Unlock()
-	service.Logger().Info("Task:RemoveTask => ", taskID)
+	service.Logger().Info(fmt.Sprint("Task:RemoveTask => ", taskID))
 }
 
 // Count get all task's count
@@ -355,7 +355,7 @@ func (service *TaskService) RemoveAllTask() {
 func (service *TaskService) StopAllTask() {
 	service.Logger().Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Logger().Info("Task:StopAllTask::StopTask => ", v.TaskID())
+		service.Logger().Info(fmt.Sprint("Task:StopAllTask::StopTask => ", v.TaskID()))
 		v.Stop()
 	}
 	service.Logger().Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
@@ -372,7 +372,7 @@ func (service *TaskService) StartAllTask() {
 }
 
 func (service *TaskService) debugExpress(set *ExpressSet) {
-	service.Logger().Debug("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap)
+	service.Logger().Debug(fmt.Sprint("parseExpress(", set.rawExpress, " , ", set.expressType, ") => ", set.timeMap))
 }
 
 func (service *TaskService) defaultLogCounterInfo(ctx *TaskContext) error {
