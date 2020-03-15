@@ -33,7 +33,7 @@ type (
 		TaskID   string
 		TaskType string
 		IsRun    bool
-		Handler  TaskHandle
+		Handler  TaskHandle `json:"-"`
 		DueTime  int64
 		Interval int64
 		Express  string
