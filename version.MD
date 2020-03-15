@@ -1,5 +1,9 @@
 ## devfeel/dottask
 
+#### Version 0.9.6
+* Opt: add json tag '-' on TaskConfig.Handler, to ignore json marshal
+* 2020-03-15 12:00 at ShangHai
+
 #### Version 0.9.5
 * Opt: 修正Logger定义，与dotlog适配
 * Opt: 整理代码格式
