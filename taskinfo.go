@@ -1,7 +1,6 @@
 package task
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -71,7 +70,6 @@ func (task *TaskInfo) Stop() {
 	if task.State == TaskState_Run {
 		task.TimeTicker.Stop()
 		task.State = TaskState_Stop
-		task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " Stop"))
 	}
 }
 
