@@ -77,6 +77,11 @@ func StartNewService() *TaskService {
 	service.handlerMutex = new(sync.RWMutex)
 	service.handlerMap = make(map[string]TaskHandle)
 	service.ExceptionHandler = defaultExceptionHandler
+	return service
+}
+
+// UseDefaultLogCounterTask use default LogCounterTask in TaskService
+func (service *TaskService) UseDefaultLogCounterTask() {
 	counterTask, err := NewCronTask(defaultCounterTaskName, true, "0 * * * * *", service.defaultLogCounterInfo, nil)
 	if err != nil {
 		fmt.Println("Init Counter Task error", err)
@@ -84,7 +89,6 @@ func StartNewService() *TaskService {
 	counterTask.SetTaskService(service)
 	counterTask.Start()
 	service.counterTask = counterTask
-	return service
 }
 
 // SetExceptionHandler 设置自定义异常处理方法
@@ -382,7 +386,9 @@ func (service *TaskService) defaultLogCounterInfo(ctx *TaskContext) error {
 		showInfos = append(showInfos, &ShowCountInfo{TaskID: t.TaskID(), Lable: "RUN", Count: t.CounterInfo().RunCounter.Count()})
 		showInfos = append(showInfos, &ShowCountInfo{TaskID: t.TaskID(), Lable: "ERROR", Count: t.CounterInfo().ErrorCounter.Count()})
 	}
-	str, _ := json.Marshal(showInfos)
-	service.Logger().Debug(string(str))
+	if len(showInfos) > 0 {
+		str, _ := json.Marshal(showInfos)
+		service.Logger().Debug(string(str))
+	}
 	return nil
 }

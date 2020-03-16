@@ -1,5 +1,9 @@
 ## devfeel/dottask
 
+#### Version 0.9.7
+* refactor: 从StartNewService中移除LogCounterTask注册，独立为UseDefaultLogCounterTask供应用单独调用
+* 2020-03-16 19:00 at ShangHai
+
 #### Version 0.9.6
 * Opt: add json tag '-' on TaskConfig.Handler, to ignore json marshal
 * 2020-03-15 12:00 at ShangHai
