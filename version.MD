@@ -1,7 +1,8 @@
 ## devfeel/dottask
 
 #### Version 0.9.8
-* feature: TaskContext增加Header,类型为Map[string]interface{},用于在一次执行周期内传递自定义数据，每次执行完会清除
+* feature: TaskContext增加Header属性,类型为Map[string]interface{},用于在一次执行周期内传递自定义数据，每次执行完置空
+* feature: TaskContext增加Error属性,类型为error,用于在一次执行周期内传递执行结果的Error信息，每次执行完置空
 * 2020-03-28 16:00 at ShangHai
 
 #### Version 0.9.7

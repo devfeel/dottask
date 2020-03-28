@@ -45,6 +45,7 @@ type (
 		TaskData interface{} //用于当前Task全局设置的数据项
 		Message  interface{} //用于每次Task执行上下文消息传输
 		IsEnd    bool        //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
+		Error    error
 		Header   map[string]interface{}
 	}
 

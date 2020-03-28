@@ -102,6 +102,7 @@ func startQueueTask(task *QueueTask) {
 	handler := func() {
 		defer func() {
 			task.Context().Header = nil
+			task.Context().Error = nil
 			task.CounterInfo().RunCounter.Inc(1)
 			if err := recover(); err != nil {
 				task.CounterInfo().ErrorCounter.Inc(1)
@@ -125,6 +126,7 @@ func startQueueTask(task *QueueTask) {
 		}
 
 		if err != nil {
+			task.Context().Error = err
 			task.CounterInfo().ErrorCounter.Inc(1)
 			if task.taskService != nil && task.taskService.ExceptionHandler != nil {
 				task.taskService.ExceptionHandler(task.Context(), err)
