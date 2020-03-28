@@ -101,7 +101,6 @@ func NewQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle,
 func startQueueTask(task *QueueTask) {
 	handler := func() {
 		defer func() {
-			task.Context().Header = nil
 			task.CounterInfo().RunCounter.Inc(1)
 			if err := recover(); err != nil {
 				task.CounterInfo().ErrorCounter.Inc(1)

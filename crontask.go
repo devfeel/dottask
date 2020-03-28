@@ -156,7 +156,6 @@ func startCronTask(task *CronTask) {
 
 func doCronTask(task *CronTask) {
 	defer func() {
-		task.context.Header = nil
 		if err := recover(); err != nil {
 			task.CounterInfo().ErrorCounter.Inc(1)
 			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " cron handler recover error => ", err))

@@ -107,7 +107,6 @@ func NewLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handl
 func startLoopTask(task *LoopTask) {
 	handler := func() {
 		defer func() {
-			task.context.Header = nil
 			task.CounterInfo().RunCounter.Inc(1)
 			if err := recover(); err != nil {
 				task.CounterInfo().ErrorCounter.Inc(1)
