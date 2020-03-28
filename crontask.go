@@ -156,6 +156,7 @@ func startCronTask(task *CronTask) {
 
 func doCronTask(task *CronTask) {
 	defer func() {
+		task.context.Header = nil
 		if err := recover(); err != nil {
 			task.CounterInfo().ErrorCounter.Inc(1)
 			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " cron handler recover error => ", err))
@@ -168,6 +169,7 @@ func doCronTask(task *CronTask) {
 		}
 	}()
 	now := time.Now()
+	task.context.Header = make(map[string]interface{})
 	if task.time_WeekDay.IsMatch(now) &&
 		task.time_Month.IsMatch(now) &&
 		task.time_Day.IsMatch(now) &&

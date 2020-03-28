@@ -1,5 +1,9 @@
 ## devfeel/dottask
 
+#### Version 0.9.8
+* feature: TaskContext增加Header,类型为Map[string]interface{},用于在一次执行周期内传递自定义数据，每次执行完会清除
+* 2020-03-28 16:00 at ShangHai
+
 #### Version 0.9.7
 * refactor: 从StartNewService中移除LogCounterTask注册，独立为UseDefaultLogCounterTask供应用单独调用
 * 2020-03-16 19:00 at ShangHai
