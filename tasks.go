@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -391,4 +392,16 @@ func (service *TaskService) defaultLogCounterInfo(ctx *TaskContext) error {
 		service.Logger().Debug(string(str))
 	}
 	return nil
+}
+
+// ValidateTaskType validate the TaskType is supported
+func ValidateTaskType(taskType string) bool {
+	if taskType == "" {
+		return false
+	}
+	checkType := strings.ToLower(taskType)
+	if checkType != TaskType_Cron && checkType != TaskType_Loop && checkType != TaskType_Queue {
+		return false
+	}
+	return true
 }
