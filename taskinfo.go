@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -47,6 +48,7 @@ type (
 		IsEnd    bool        //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
 		Error    error
 		Header   map[string]interface{}
+		Context  context.Context
 	}
 
 	CounterInfo struct {

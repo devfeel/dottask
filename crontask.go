@@ -121,16 +121,16 @@ func NewCronTask(taskID string, isRun bool, express string, handler TaskHandle, 
 	task.IsRun = isRun
 	task.handler = handler
 	task.RawExpress = express
-	expresslist := strings.Split(express, " ")
-	if len(expresslist) != 6 {
+	expressList := strings.Split(express, " ")
+	if len(expressList) != 6 {
 		return nil, errors.New("express is wrong format => not 6 parts")
 	}
-	task.time_WeekDay = parseExpress(expresslist[5], ExpressType_WeekDay)
-	task.time_Month = parseExpress(expresslist[4], ExpressType_Month)
-	task.time_Day = parseExpress(expresslist[3], ExpressType_Day)
-	task.time_Hour = parseExpress(expresslist[2], ExpressType_Hour)
-	task.time_Minute = parseExpress(expresslist[1], ExpressType_Minute)
-	task.time_Second = parseExpress(expresslist[0], ExpressType_Second)
+	task.time_WeekDay = parseExpress(expressList[5], ExpressType_WeekDay)
+	task.time_Month = parseExpress(expressList[4], ExpressType_Month)
+	task.time_Day = parseExpress(expressList[3], ExpressType_Day)
+	task.time_Hour = parseExpress(expressList[2], ExpressType_Hour)
+	task.time_Minute = parseExpress(expressList[1], ExpressType_Minute)
+	task.time_Second = parseExpress(expressList[0], ExpressType_Second)
 
 	task.State = TaskState_Init
 	task.context = context
