@@ -33,6 +33,7 @@ func main() {
 
 	//step 3: load config file
 	service.LoadFileConfig("c:/gotmp/dottask/task.conf")
+	fmt.Println(*service.Config)
 
 	fmt.Println(time.Now().String(), " => Begin Task")
 	//step 4: start all task

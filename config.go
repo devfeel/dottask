@@ -16,6 +16,7 @@ type (
 		Global struct {
 			LogPath string `xml:"logpath,attr"  yaml:"logpath"`
 			IsRun   bool   `xml:"isrun,attr" yaml:"isrun"`
+			Timeout int64  `xml:"timeout,attr" yaml:"timeout"` //全局超时配置，单位为毫秒
 		} `xml:"global" yaml:"global"`
 
 		Tasks []struct {
@@ -28,6 +29,7 @@ type (
 			QueueSize   int64  `xml:"queuesize,attr" yaml:"queuesize"`     //queue类型下,queue初始长度
 			HandlerName string `xml:"handlername,attr" yaml:"handlername"` //Task对应的HandlerName,需使用RegisterHandler进行统一注册
 			HandlerData string `xml:"handlerdata,attr" yaml:"handlerdata"` //Task对应的自定义数据,可在配置源中设置
+			Timeout     int64  `xml:"timeout,attr" yaml:"timeout"`         //全局超时配置，单位为毫秒
 		} `xml:"tasks>task" yaml:"tasks"`
 	}
 
