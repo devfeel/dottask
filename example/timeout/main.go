@@ -1,35 +1,64 @@
 package main
 
 import (
-	"context"
 	"fmt"
+	. "github.com/devfeel/dottask"
 	"time"
 )
 
-func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	query(ctx)
+var service *TaskService
 
-	time.Sleep(time.Hour)
+var firstLoopTimeout = 0
+var firstCronTimeout = 0
+
+var patchLoop = 0
+var patchCron = 0
+
+func Job_Timeout_Test(ctx *TaskContext) error {
+	patchCron += 1
+	patch := patchLoop
+
+	if firstLoopTimeout <= 0 {
+		firstLoopTimeout = 1
+		time.Sleep(time.Second * 15)
+	} else {
+		time.Sleep(time.Second)
+	}
+
+	fmt.Println(time.Now().String(), " => Job_Timeout_Test", patch)
+	return nil
 }
 
-func query(ctx context.Context) {
-	notifyChan := make(chan string)
-	doing := func() {
-		time.Sleep(time.Second)
-		fmt.Println("1:", time.Now())
-		time.Sleep(time.Second * 3)
-		fmt.Println("2:", time.Now())
-		time.Sleep(time.Second * 5)
-		fmt.Println("3:", time.Now())
-		notifyChan <- "1"
+func Loop_Timeout_Test(ctx *TaskContext) error {
+	patchLoop += 1
+	patch := patchLoop
+	if firstCronTimeout <= 0 {
+		firstCronTimeout = 1
+		time.Sleep(time.Second * 20)
 	}
-	go doing()
-	select {
-	case <-notifyChan:
-		fmt.Println("done")
-	case <-ctx.Done():
-		fmt.Println("timeout")
+
+	fmt.Println(time.Now().String(), " => Loop_Timeout_Test", patch)
+	return nil
+}
+
+func main() {
+	service = StartNewService()
+
+	t1, err := service.CreateCronTask("test-timeout-cron", true, "*/10 * * * * *", Job_Timeout_Test, nil)
+	if err != nil {
+		fmt.Println("service.CreateCronTask error! => ", err.Error())
 	}
+	t1.SetTimeout(5)
+	t2, err := service.CreateLoopTask("test-timeout-loop", true, 0, 10000, Loop_Timeout_Test, nil)
+	if err != nil {
+		fmt.Println("service.CreateLoopTask error! => ", err.Error())
+	}
+	t2.SetTimeout(5)
+
+	service.StartAllTask()
+
+	for {
+		time.Sleep(time.Hour)
+	}
+
 }

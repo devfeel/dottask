@@ -55,7 +55,7 @@ func main() {
 	if exists {
 		err = t.RunOnce()
 		if err != nil {
-			fmt.Println(t.Context(), "RunOnce error =>", err)
+			fmt.Println(t.GetConfig(), "RunOnce error =>", err)
 		}
 	}
 

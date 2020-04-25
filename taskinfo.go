@@ -21,9 +21,10 @@ type (
 		TimeTicker  *time.Ticker `json:"-"`
 		TaskType    string       `json:"tasktype"`
 		handler     TaskHandle
-		context     *TaskContext `json:"context"`
-		State       string       `json:"state"`   //匹配 TskState_Init、TaskState_Run、TaskState_Stop
-		DueTime     int64        `json:"duetime"` //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
+		TaskData    interface{}
+		State       string `json:"state"`   //匹配 TskState_Init、TaskState_Run、TaskState_Stop
+		DueTime     int64  `json:"duetime"` //开始任务的延迟时间（以毫秒为单位），如果<=0则不延迟
+		Timeout     int64
 
 		counters *CounterInfo
 	}
@@ -40,17 +41,6 @@ type (
 		TaskData interface{}
 	}
 
-	//Task上下文信息
-	TaskContext struct {
-		TaskID   string
-		TaskData interface{} //用于当前Task全局设置的数据项
-		Message  interface{} //用于每次Task执行上下文消息传输
-		IsEnd    bool        //如果设置该属性为true，则停止当次任务的后续执行，一般用在OnBegin中
-		Error    error
-		Header   map[string]interface{}
-		Context  context.Context
-	}
-
 	CounterInfo struct {
 		StartTime    time.Time
 		RunCounter   Counter
@@ -62,8 +52,6 @@ type (
 		Lable  string
 		Count  int64
 	}
-
-	TaskHandle func(*TaskContext) error
 )
 
 //Stop stop task
@@ -77,14 +65,13 @@ func (task *TaskInfo) Stop() {
 	}
 }
 
+func (task *TaskInfo) SetTimeout(timeout int64) {
+	task.Timeout = timeout
+}
+
 //TaskID return taskID
 func (task *TaskInfo) TaskID() string {
 	return task.taskID
-}
-
-//Context return context
-func (task *TaskInfo) Context() *TaskContext {
-	return task.context
 }
 
 //SetTaskService Set up the associated service
@@ -97,8 +84,27 @@ func (task *TaskInfo) SetTaskService(service *TaskService) {
 // no recover panic
 // support for #6 新增RunOnce方法建议
 func (task *TaskInfo) RunOnce() error {
-	err := task.handler(task.context)
+	err := task.handler(task.getTaskContext())
 	return err
+}
+
+func (task *TaskInfo) getTaskContext() *TaskContext {
+	ctx := task.taskService.contextPool.Get().(*TaskContext)
+	ctx.TaskID = task.taskID
+	ctx.TaskData = task.TaskData
+	ctx.Header = make(map[string]interface{})
+	if task.Timeout > 0 {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(task.Timeout))
+		ctx.TimeoutContext = timeoutCtx
+		ctx.TimeoutCancel = cancel
+		ctx.doneChan = make(chan struct{})
+	}
+	return ctx
+}
+
+func (task *TaskInfo) putTaskContext(ctx *TaskContext) {
+	ctx.reset()
+	task.taskService.contextPool.Put(ctx)
 }
 
 func (task *TaskInfo) initCounters() {

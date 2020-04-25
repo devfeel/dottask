@@ -24,7 +24,7 @@ func (task *LoopTask) GetConfig() *TaskConfig {
 		DueTime:  task.DueTime,
 		Interval: task.Interval,
 		Express:  "",
-		TaskData: task.Context().TaskData,
+		TaskData: task.TaskData,
 	}
 }
 
@@ -48,7 +48,7 @@ func (task *LoopTask) Reset(conf *TaskConfig) error {
 	task.Stop()
 	task.IsRun = conf.IsRun
 	if conf.TaskData != nil {
-		task.Context().TaskData = conf.TaskData
+		task.TaskData = conf.TaskData
 	}
 	if conf.Handler != nil {
 		task.handler = conf.Handler
@@ -80,84 +80,105 @@ func (task *LoopTask) Start() {
 // no recover panic
 // support for #6 新增RunOnce方法建议
 func (task *LoopTask) RunOnce() error {
-	err := task.handler(task.context)
+	err := task.handler(task.getTaskContext())
 	return err
 }
 
 // NewLoopTask create new loop task
 func NewLoopTask(taskID string, isRun bool, dueTime int64, interval int64, handler TaskHandle, taskData interface{}) (Task, error) {
-	context := new(TaskContext)
-	context.TaskID = taskID
-	context.TaskData = taskData
-
 	task := new(LoopTask)
 	task.initCounters()
-	task.taskID = context.TaskID
+	task.taskID = taskID
 	task.TaskType = TaskType_Loop
 	task.IsRun = isRun
 	task.handler = handler
 	task.DueTime = dueTime
 	task.Interval = interval
 	task.State = TaskState_Init
-	task.context = context
+	task.TaskData = taskData
 	return task, nil
 }
 
 //start loop task
 func startLoopTask(task *LoopTask) {
+	doFunc := func() {
+		task.TimeTicker = time.NewTicker(time.Duration(task.Interval) * time.Millisecond)
+		doLoopTask(task)
+		for {
+			select {
+			case <-task.TimeTicker.C:
+				doLoopTask(task)
+			}
+		}
+	}
+
+	//等待设定的延时毫秒
+	if task.DueTime > 0 {
+		go time.AfterFunc(time.Duration(task.DueTime)*time.Millisecond, doFunc)
+	} else {
+		go doFunc()
+	}
+
+}
+
+func doLoopTask(task *LoopTask) {
+	taskCtx := task.getTaskContext()
+	defer func() {
+		if taskCtx.TimeoutCancel != nil {
+			taskCtx.TimeoutCancel()
+		}
+		task.putTaskContext(taskCtx)
+		if err := recover(); err != nil {
+			task.CounterInfo().ErrorCounter.Inc(1)
+			//task.taskService.Logger().Debug(task.TaskID, " loop handler recover error => ", err)
+			if task.taskService.ExceptionHandler != nil {
+				task.taskService.ExceptionHandler(taskCtx, fmt.Errorf("%v", err))
+			}
+			//goroutine panic, restart cron task
+			startLoopTask(task)
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID(), " goroutine panic, restart LoopTask"))
+		}
+	}()
+
 	handler := func() {
 		defer func() {
-			task.Context().Header = nil
-			task.Context().Error = nil
-			task.CounterInfo().RunCounter.Inc(1)
-			if err := recover(); err != nil {
-				task.CounterInfo().ErrorCounter.Inc(1)
-				//task.taskService.Logger().Debug(task.TaskID, " loop handler recover error => ", err)
-				if task.taskService.ExceptionHandler != nil {
-					task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
-				}
-				//goroutine panic, restart cron task
-				startLoopTask(task)
-				task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " goroutine panic, restart LoopTask"))
+			if task.Timeout > 0 {
+				taskCtx.doneChan <- struct{}{}
 			}
 		}()
-		task.context.Header = make(map[string]interface{})
+		//inc run counter
+		task.CounterInfo().RunCounter.Inc(1)
 		//do log
 		if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
-			task.taskService.OnBeforeHandler(task.Context())
+			task.taskService.OnBeforeHandler(taskCtx)
 		}
 		var err error
-		if !task.Context().IsEnd {
-			err = task.handler(task.Context())
+		if !taskCtx.IsEnd {
+			err = task.handler(taskCtx)
 		}
 		if err != nil {
-			task.Context().Error = err
+			taskCtx.Error = err
 			task.CounterInfo().ErrorCounter.Inc(1)
 			if task.taskService != nil && task.taskService.ExceptionHandler != nil {
-				task.taskService.ExceptionHandler(task.Context(), err)
+				task.taskService.ExceptionHandler(taskCtx, err)
 			}
 		} else {
 			//task.taskService.Logger().Debug(task.TaskID, " loop handler end success")
 		}
 		if task.taskService != nil && task.taskService.OnEndHandler != nil {
-			task.taskService.OnEndHandler(task.Context())
+			task.taskService.OnEndHandler(taskCtx)
 		}
-	}
-	dofunc := func() {
-		task.TimeTicker = time.NewTicker(time.Duration(task.Interval) * time.Millisecond)
-		handler()
-		for {
-			select {
-			case <-task.TimeTicker.C:
-				handler()
-			}
-		}
-	}
-	//等待设定的延时毫秒
-	if task.DueTime > 0 {
-		go time.AfterFunc(time.Duration(task.DueTime)*time.Millisecond, dofunc)
-	} else {
-		go dofunc()
 	}
 
+	if task.Timeout > 0 {
+		go handler()
+		select {
+		case <-taskCtx.TimeoutContext.Done():
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID(), "do handler timeout."))
+		case <-taskCtx.doneChan:
+			return
+		}
+	} else {
+		handler()
+	}
 }

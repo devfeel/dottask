@@ -31,7 +31,7 @@ func (task *CronTask) GetConfig() *TaskConfig {
 		DueTime:  task.DueTime,
 		Interval: 0,
 		Express:  task.RawExpress,
-		TaskData: task.Context().TaskData,
+		TaskData: task.TaskData,
 	}
 }
 
@@ -58,7 +58,7 @@ func (task *CronTask) Reset(conf *TaskConfig) error {
 	task.Stop()
 	task.IsRun = conf.IsRun
 	if conf.TaskData != nil {
-		task.Context().TaskData = conf.TaskData
+		task.TaskData = conf.TaskData
 	}
 	if conf.Handler != nil {
 		task.handler = conf.Handler
@@ -104,23 +104,20 @@ func (task *CronTask) Start() {
 // no recover panic
 // support for #6 新增RunOnce方法建议
 func (task *CronTask) RunOnce() error {
-	err := task.handler(task.context)
+	err := task.handler(task.getTaskContext())
 	return err
 }
 
 // NewCronTask create new cron task
 func NewCronTask(taskID string, isRun bool, express string, handler TaskHandle, taskData interface{}) (Task, error) {
-	context := new(TaskContext)
-	context.TaskID = taskID
-	context.TaskData = taskData
-
 	task := new(CronTask)
 	task.initCounters()
-	task.taskID = context.TaskID
+	task.taskID = taskID
 	task.TaskType = TaskType_Cron
 	task.IsRun = isRun
 	task.handler = handler
 	task.RawExpress = express
+	task.TaskData = taskData
 	expressList := strings.Split(express, " ")
 	if len(expressList) != 6 {
 		return nil, errors.New("express is wrong format => not 6 parts")
@@ -133,7 +130,6 @@ func NewCronTask(taskID string, isRun bool, express string, handler TaskHandle, 
 	task.time_Second = parseExpress(expressList[0], ExpressType_Second)
 
 	task.State = TaskState_Init
-	task.context = context
 	return task, nil
 }
 
@@ -155,48 +151,71 @@ func startCronTask(task *CronTask) {
 }
 
 func doCronTask(task *CronTask) {
+	taskCtx := task.getTaskContext()
 	defer func() {
-		task.Context().Header = nil
-		task.Context().Error = nil
+		if taskCtx.TimeoutCancel != nil {
+			taskCtx.TimeoutCancel()
+		}
+		task.putTaskContext(taskCtx)
 		if err := recover(); err != nil {
 			task.CounterInfo().ErrorCounter.Inc(1)
-			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " cron handler recover error => ", err))
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID(), " cron handler recover error => ", err))
 			if task.taskService.ExceptionHandler != nil {
-				task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
+				task.taskService.ExceptionHandler(taskCtx, fmt.Errorf("%v", err))
 			}
 			//goroutine panic, restart cron task
 			startCronTask(task)
-			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID, " goroutine panic, restart CronTask"))
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID(), " goroutine panic, restart CronTask"))
 		}
 	}()
-	now := time.Now()
-	task.context.Header = make(map[string]interface{})
-	if task.time_WeekDay.IsMatch(now) &&
-		task.time_Month.IsMatch(now) &&
-		task.time_Day.IsMatch(now) &&
-		task.time_Hour.IsMatch(now) &&
-		task.time_Minute.IsMatch(now) &&
-		task.time_Second.IsMatch(now) {
 
-		//inc run counter
-		task.CounterInfo().RunCounter.Inc(1)
-		//do log
-		if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
-			task.taskService.OnBeforeHandler(task.Context())
-		}
-		var err error
-		if !task.Context().IsEnd {
-			err = task.handler(task.Context())
-		}
-		if err != nil {
-			task.Context().Error = err
-			task.CounterInfo().ErrorCounter.Inc(1)
-			if task.taskService != nil && task.taskService.ExceptionHandler != nil {
-				task.taskService.ExceptionHandler(task.Context(), err)
+	handler := func() {
+		defer func() {
+			if task.Timeout > 0 {
+				taskCtx.doneChan <- struct{}{}
+			}
+		}()
+		now := time.Now()
+		if task.time_WeekDay.IsMatch(now) &&
+			task.time_Month.IsMatch(now) &&
+			task.time_Day.IsMatch(now) &&
+			task.time_Hour.IsMatch(now) &&
+			task.time_Minute.IsMatch(now) &&
+			task.time_Second.IsMatch(now) {
+
+			//inc run counter
+			task.CounterInfo().RunCounter.Inc(1)
+			//do log
+			if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
+				task.taskService.OnBeforeHandler(taskCtx)
+			}
+			var err error
+			if !taskCtx.IsEnd {
+				err = task.handler(taskCtx)
+			}
+			if err != nil {
+				taskCtx.Error = err
+				task.CounterInfo().ErrorCounter.Inc(1)
+				if task.taskService != nil && task.taskService.ExceptionHandler != nil {
+					task.taskService.ExceptionHandler(taskCtx, err)
+				}
+			}
+			if task.taskService != nil && task.taskService.OnEndHandler != nil {
+				task.taskService.OnEndHandler(taskCtx)
 			}
 		}
-		if task.taskService != nil && task.taskService.OnEndHandler != nil {
-			task.taskService.OnEndHandler(task.Context())
-		}
 	}
+
+	if task.Timeout > 0 {
+		go handler()
+		select {
+		case <-taskCtx.TimeoutContext.Done():
+			task.taskService.Logger().Debug(fmt.Sprint(task.TaskID(), "do handler timeout."))
+		case <-taskCtx.doneChan:
+			return
+		}
+	} else {
+		handler()
+	}
+
 }

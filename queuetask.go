@@ -37,7 +37,7 @@ func (task *QueueTask) Start() {
 
 // RunOnce do task only once
 func (task *QueueTask) RunOnce() error {
-	err := task.handler(task.Context())
+	err := task.handler(task.getTaskContext())
 	return err
 }
 
@@ -51,7 +51,7 @@ func (task *QueueTask) GetConfig() *TaskConfig {
 		DueTime:  task.DueTime,
 		Interval: 0,
 		Express:  "",
-		TaskData: task.Context().TaskData,
+		TaskData: task.TaskData,
 	}
 }
 
@@ -67,7 +67,7 @@ func (task *QueueTask) Reset(conf *TaskConfig) error {
 	task.Stop()
 	task.IsRun = conf.IsRun
 	if conf.TaskData != nil {
-		task.Context().TaskData = conf.TaskData
+		task.TaskData = conf.TaskData
 	}
 	if conf.Handler != nil {
 		task.handler = conf.Handler
@@ -80,61 +80,57 @@ func (task *QueueTask) Reset(conf *TaskConfig) error {
 
 // NewQueueTask create new queue task
 func NewQueueTask(taskID string, isRun bool, interval int64, handler TaskHandle, taskData interface{}, queueSize int64) (Task, error) {
-	context := new(TaskContext)
-	context.TaskID = taskID
-	context.TaskData = taskData
-
 	task := new(QueueTask)
 	task.initCounters()
-	task.taskID = context.TaskID
+	task.taskID = taskID
 	task.TaskType = TaskType_Queue
 	task.IsRun = isRun
 	task.handler = handler
 	task.Interval = interval
 	task.State = TaskState_Init
-	task.context = context
+	task.TaskData = taskData
 	task.MessageChan = make(chan interface{}, queueSize)
 	return task, nil
 }
 
 //start queue task
 func startQueueTask(task *QueueTask) {
+	taskCtx := task.getTaskContext()
 	handler := func() {
 		defer func() {
-			task.Context().Header = nil
-			task.Context().Error = nil
-			task.CounterInfo().RunCounter.Inc(1)
+			task.putTaskContext(taskCtx)
 			if err := recover(); err != nil {
 				task.CounterInfo().ErrorCounter.Inc(1)
 				if task.taskService.ExceptionHandler != nil {
-					task.taskService.ExceptionHandler(task.Context(), fmt.Errorf("%v", err))
+					task.taskService.ExceptionHandler(taskCtx, fmt.Errorf("%v", err))
 				}
 			}
 		}()
-		task.Context().Header = make(map[string]interface{})
+
+		task.CounterInfo().RunCounter.Inc(1)
 		//get value from message chan
 		message := <-task.MessageChan
-		task.Context().Message = message
+		taskCtx.Message = message
 
 		if task.taskService != nil && task.taskService.OnBeforeHandler != nil {
-			task.taskService.OnBeforeHandler(task.Context())
+			task.taskService.OnBeforeHandler(taskCtx)
 		}
 
 		var err error
-		if !task.Context().IsEnd {
-			err = task.handler(task.Context())
+		if !taskCtx.IsEnd {
+			err = task.handler(taskCtx)
 		}
 
 		if err != nil {
-			task.Context().Error = err
+			taskCtx.Error = err
 			task.CounterInfo().ErrorCounter.Inc(1)
 			if task.taskService != nil && task.taskService.ExceptionHandler != nil {
-				task.taskService.ExceptionHandler(task.Context(), err)
+				task.taskService.ExceptionHandler(taskCtx, err)
 			}
 		}
 
 		if task.taskService != nil && task.taskService.OnEndHandler != nil {
-			task.taskService.OnEndHandler(task.Context())
+			task.taskService.OnEndHandler(taskCtx)
 		}
 	}
 	dofunc := func() {

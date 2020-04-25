@@ -40,9 +40,9 @@ type (
 	Task interface {
 		TaskID() string
 		GetConfig() *TaskConfig
-		Context() *TaskContext
 		Start()
 		Stop()
+		SetTimeout(int64)
 		RunOnce() error
 		SetTaskService(service *TaskService)
 		Reset(conf *TaskConfig) error
@@ -63,7 +63,10 @@ type (
 		ExceptionHandler ExceptionHandleFunc
 		OnBeforeHandler  TaskHandle
 		OnEndHandler     TaskHandle
+		contextPool      *sync.Pool
 	}
+
+	TaskHandle func(*TaskContext) error
 )
 
 func defaultExceptionHandler(ctx *TaskContext, err error) {
@@ -78,6 +81,11 @@ func StartNewService() *TaskService {
 	service.handlerMutex = new(sync.RWMutex)
 	service.handlerMap = make(map[string]TaskHandle)
 	service.ExceptionHandler = defaultExceptionHandler
+	service.contextPool = &sync.Pool{
+		New: func() interface{} {
+			return &TaskContext{}
+		},
+	}
 	return service
 }
 
@@ -237,14 +245,6 @@ func (service *TaskService) CreateCronTask(taskID string, isRun bool, express st
 	if err != nil {
 		return task, err
 	}
-
-	//service.debugExpress(task.(*CronTask).time_WeekDay)
-	//service.debugExpress(task.(*CronTask).time_Month)
-	//service.debugExpress(task.(*CronTask).time_Day)
-	//service.debugExpress(task.(*CronTask).time_Hour)
-	//service.debugExpress(task.(*CronTask).time_Minute)
-	//service.debugExpress(task.(*CronTask).time_Second)
-
 	task.SetTaskService(service)
 	service.AddTask(task)
 	return task, nil

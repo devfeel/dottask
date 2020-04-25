@@ -1,5 +1,11 @@
 ## devfeel/dottask
 
+#### Version 0.9.9
+* feature: TaskContext增加TimeoutContext与TimeoutCancel属性，用于超时控制，应用可根据需要从TaskContext获取
+* feature: TaskInfo增加SetTimeout，用于设置超时时间，单位为秒
+* refactor: 移除TaskInfo.Context()
+* 2020-04-25 16:00 at ShangHai
+
 #### Version 0.9.8
 * feature: TaskContext增加Header属性,类型为Map[string]interface{},用于在一次执行周期内传递自定义数据，每次执行完置空
 * feature: TaskContext增加Error属性,类型为error,用于在一次执行周期内传递执行结果的Error信息，每次执行完置空
