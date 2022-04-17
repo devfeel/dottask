@@ -1,5 +1,10 @@
 ## devfeel/dottask
 
+#### Version 0.9.10
+* feature: add LICENSE file for issue #10, thanks to @katsusan.
+* feature: add PackageVersion use to return packageVersion info
+* 2022-04-17 08:00 at ShangHai
+
 #### Version 0.9.9
 * feature: TaskContext增加TimeoutContext与TimeoutCancel属性，用于超时控制，应用可根据需要从TaskContext获取
 * feature: TaskInfo增加SetTimeout，用于设置超时时间，单位为秒
@@ -89,7 +94,7 @@
 #### Version 0.8.3
 * New feature: add TaskService.GetAllTasks() used to return all task info which type is map[string]Task
 * Example:
-  ```golang
+  ``` go
   for _, t := range service.GetAllTasks(){
   		fmt.Println("GetAllTasks", t.TaskID(), t.GetConfig().TaskType, t.GetConfig().IsRun, t.GetConfig().Interval, t.GetConfig().Express)
   }

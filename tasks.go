@@ -11,29 +11,6 @@ import (
 	"sync"
 )
 
-const (
-	TaskState_Init = "0"
-	TaskState_Run  = "1"
-	TaskState_Stop = "2"
-)
-
-const (
-	TaskType_Loop  = "loop"
-	TaskType_Cron  = "cron"
-	TaskType_Queue = "queue"
-)
-
-const (
-	ConfigType_Xml  = "xml"
-	ConfigType_Json = "json"
-	ConfigType_Yaml = "yaml"
-)
-
-const (
-	defaultCounterTaskName = "TASK_DEFAULT_COUNTERINFO"
-	fullTimeLayout         = "2006-01-02 15:04:05.9999"
-)
-
 var ErrNotSupportTaskType = errors.New("not support task type")
 
 type (
@@ -51,7 +28,7 @@ type (
 
 	ExceptionHandleFunc func(*TaskContext, error)
 
-	//task 容器
+	// TaskService task 容器
 	TaskService struct {
 		Config           *AppConfig
 		taskMap          map[string]Task
@@ -86,6 +63,7 @@ func StartNewService() *TaskService {
 			return &TaskContext{}
 		},
 	}
+	service.Logger().Debug("StartTaskService PackageVersion[" + PackageVersion() + "]")
 	return service
 }
 
@@ -105,7 +83,7 @@ func (service *TaskService) SetExceptionHandler(handler ExceptionHandleFunc) {
 	service.ExceptionHandler = handler
 }
 
-// SetOnBeforHandler set handler which exec before task run
+// SetOnBeforeHandler set handler which exec before task run
 func (service *TaskService) SetOnBeforeHandler(handler TaskHandle) {
 	service.OnBeforeHandler = handler
 }
@@ -324,7 +302,7 @@ func (service *TaskService) PrintAllTasks() string {
 	return body
 }
 
-// PrintTaskCountData print all task counter data
+// PrintAllTaskCounterInfo print all task counter data
 func (service *TaskService) PrintAllTaskCounterInfo() string {
 	body := ""
 	for _, v := range service.taskMap {
@@ -334,7 +312,7 @@ func (service *TaskService) PrintAllTaskCounterInfo() string {
 	return body
 }
 
-// GetAllTaskCounterInfo return all show count info
+// GetAllTaskCountInfo return all show count info
 func (service *TaskService) GetAllTaskCountInfo() []ShowCountInfo {
 	showInfos := []ShowCountInfo{}
 	for _, t := range service.GetAllTasks() {
@@ -404,4 +382,9 @@ func ValidateTaskType(taskType string) bool {
 		return false
 	}
 	return true
+}
+
+// PackageVersion return packageVersion info
+func PackageVersion() string {
+	return packageVersion
 }
