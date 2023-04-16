@@ -77,8 +77,9 @@ func main() {
 		}
 	}
 
-	time.Sleep(time.Second * 20)
+	time.Sleep(time.Second * 10)
 
+	service.RemoveTask("testloop")
 	fmt.Println(service.PrintAllTaskCounterInfo())
 	fmt.Println(service.GetAllTaskCountInfo())
 

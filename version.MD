@@ -1,5 +1,10 @@
 ## devfeel/dottask
 
+#### Version 0.9.11
+* bugfix: add 'StopTask' logic to RemoveTask to fix exceptions where the task cannot be GC after removal
+* Thanks to @aixinaxc for #12
+* 2023-04-16 13:00 at ShangHai
+
 #### Version 0.9.10
 * feature: add LICENSE file for issue #10, thanks to @katsusan.
 * feature: add PackageVersion use to return packageVersion info

@@ -1,7 +1,7 @@
 package task
 
 const (
-	packageVersion = "0.9.10"
+	packageVersion = "0.9.11"
 )
 
 const (

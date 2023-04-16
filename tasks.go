@@ -270,6 +270,15 @@ func (service *TaskService) AddTask(t Task) {
 
 // RemoveTask remove task by taskid
 func (service *TaskService) RemoveTask(taskID string) {
+	//1.stop task running
+	t, isExists := service.GetTask(taskID)
+	if !isExists {
+		return
+	}
+	t.Stop()
+	service.Logger().Info(fmt.Sprint("Task:RemoveTask::StopTask => ", taskID))
+
+	//2.delete task from taskMap
 	service.taskMutex.Lock()
 	delete(service.taskMap, taskID)
 	service.taskMutex.Unlock()
@@ -338,8 +347,8 @@ func (service *TaskService) RemoveAllTask() {
 func (service *TaskService) StopAllTask() {
 	service.Logger().Info("Task:StopAllTask begin...")
 	for _, v := range service.taskMap {
-		service.Logger().Info(fmt.Sprint("Task:StopAllTask::StopTask => ", v.TaskID()))
 		v.Stop()
+		service.Logger().Info(fmt.Sprint("Task:StopAllTask::StopTask => ", v.TaskID()))
 	}
 	service.Logger().Info("Task:StopAllTask end[" + string(len(service.taskMap)) + "]")
 }
