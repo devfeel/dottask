@@ -63,7 +63,7 @@ func StartNewService() *TaskService {
 			return &TaskContext{}
 		},
 	}
-	service.Logger().Debug("StartTaskService PackageVersion[" + PackageVersion() + "]")
+
 	return service
 }
 
@@ -130,6 +130,7 @@ func (service *TaskService) applyConfig(config *AppConfig) *TaskService {
 			service.SetLogger(NewFmtLogger())
 		}
 	}
+	service.Logger().Debug("StartTaskService PackageVersion[" + PackageVersion() + "]")
 	for _, v := range service.Config.Tasks {
 		if handler, exists := service.GetHandler(v.HandlerName); exists {
 			if v.TaskType == TaskType_Cron && v.Express != "" {
